@@ -53,9 +53,7 @@ export async function POST(request: Request) {
       buffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
       contentType = "image/jpeg";
     } catch {
-      return NextResponse.json({
-        error: `No se pudo convertir ${file.type}. Prueba con JPEG, PNG o WebP.`,
-      }, { status: 400 });
+      // si no se puede convertir, se sube el original
     }
   }
 
