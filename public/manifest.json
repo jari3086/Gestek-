@@ -1,0 +1,27 @@
+{
+  "name": "Biomed Inventory - Gesti\u00f3n de Equipos Biom\u00e9dicos",
+  "short_name": "Biomed Inventory",
+  "description": "Sistema de gesti\u00f3n de inventario, informes y facturaci\u00f3n para mantenimiento de equipos biom\u00e9dicos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#486084",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
