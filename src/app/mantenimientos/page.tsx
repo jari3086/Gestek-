@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AppHeader } from "@/components/AppHeader";
 
 export default async function MantenimientosPage() {
   const supabase = await createClient();
@@ -26,17 +26,7 @@ export default async function MantenimientosPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <Link href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">
-            Dashboard
-          </Link>
-        </div>
-      </header>
+      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }]} />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h2 className="mb-6 text-2xl font-bold text-brand-secondary">Mantenimientos</h2>
         {(!mantenimientos || mantenimientos.length === 0) ? (

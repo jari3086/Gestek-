@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { AppHeader } from "@/components/AppHeader";
 import { SignaturePad } from "@/components/SignaturePad";
 
 type PlantillaItem = {
@@ -176,6 +177,7 @@ export default function NuevoInformePage() {
     const conclusion = formData.get("conclusion") as string;
     const ordenServicio = formData.get("orden_servicio") as string;
     const numeroInforme = formData.get("numero_informe") as string;
+    const fecha = formData.get("fecha") as string;
     const profesional = formData.get("profesional") as string;
     const aprobador = formData.get("aprobador") as string;
     const firmaTecnico = formData.get("firma_tecnico") as string;
@@ -213,7 +215,7 @@ export default function NuevoInformePage() {
       },
       mantenimiento: {
         tipo,
-        fecha: new Date().toLocaleDateString("es-ES"),
+        fecha: fecha || new Date().toLocaleDateString("es-ES"),
         orden_servicio: ordenServicio || undefined,
         numero_informe: numeroInforme || undefined,
         observaciones,
@@ -289,26 +291,20 @@ export default function NuevoInformePage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <nav className="flex items-center gap-5">
-            <a href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Dashboard</a>
-            <a href="/informes" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Informes</a>
-          </nav>
-        </div>
-      </header>
+      <AppHeader
+        links={[
+          { href: "/dashboard", label: "Dashboard" },
+          { href: "/informes", label: "Informes" },
+        ]}
+      />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <h2 className="mb-6 text-2xl font-bold text-brand-secondary">Generar informe de servicio</h2>
 
         <form ref={formRef} className="space-y-6">
-          {/* Step 1: Cliente */}
+          {/* Step 1: Datos del cliente */}
           <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-            <h3 className="mb-4 font-semibold text-brand-secondary">1. Seleccionar cliente</h3>
+            <h3 className="mb-4 font-semibold text-brand-secondary">1. Datos del cliente</h3>
             <select
               value={selectedCliente?.id || ""}
               onChange={handleClienteChange}
@@ -329,10 +325,10 @@ export default function NuevoInformePage() {
             )}
           </div>
 
-          {/* Step 2: Equipo */}
+          {/* Step 2: Datos del equipo */}
           {selectedCliente && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">2. Seleccionar equipo</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">2. Datos del equipo</h3>
               <select
                 name="equipo_id"
                 required
@@ -361,10 +357,84 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 3: Template */}
+          {/* Step 3: Datos del servicio */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">3. Plantilla de checklist</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">3. Datos del servicio</h3>
+
+              <div className="mb-4">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-600">Tipo de servicio *</label>
+                <select
+                  name="tipo"
+                  required
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                >
+                  <option value="">Seleccionar...</option>
+                  {TIPOS_SERVICIO.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-600">N° de informe</label>
+                  <input
+                    name="numero_informe"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    placeholder="N° interno de informe"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-600">Orden de servicio</label>
+                  <input
+                    name="orden_servicio"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    placeholder="N° de orden del cliente"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-600">Fecha</label>
+                  <input
+                    type="date"
+                    name="fecha"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-600">Profesional que ejecuta</label>
+                  <input
+                    name="profesional"
+                    defaultValue={profile?.nombre || ""}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    placeholder="Nombre del técnico o profesional"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Observaciones iniciales */}
+          {selectedEquipo && (
+            <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
+              <h3 className="mb-4 font-semibold text-brand-secondary">4. Observaciones iniciales</h3>
+              <textarea
+                name="observaciones"
+                rows={4}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                placeholder="Observaciones generales del servicio..."
+              />
+            </div>
+          )}
+
+          {/* Step 5: Lista de chequeo */}
+          {selectedEquipo && (
+            <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
+              <h3 className="mb-4 font-semibold text-brand-secondary">5. Lista de chequeo</h3>
+
               <select
                 value={plantillaId}
                 onChange={handlePlantillaChange}
@@ -382,140 +452,68 @@ export default function NuevoInformePage() {
                   Gestionar plantillas
                 </Link>
               </div>
+
+              {selectedPlantilla && (
+                <div className="mt-4">
+                  <p className="mb-4 text-xs text-zinc-400">
+                    {selectedPlantilla.nombre}{selectedPlantilla.descripcion ? ` — ${selectedPlantilla.descripcion}` : ""}
+                  </p>
+
+                  <div className="space-y-3">
+                    {selectedPlantilla.items.map((item) => {
+                      const result = checkResults[item.id];
+                      return (
+                        <div key={item.id} className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-brand-secondary">
+                                {item.nombre}
+                                {item.obligatorio && <span className="ml-1 text-red-400">*</span>}
+                              </p>
+                              <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
+                                {item.categoria}
+                              </span>
+                            </div>
+                            <div className="flex shrink-0 gap-2">
+                              {(["ok", "falla", "na"] as const).map((r) => (
+                                <button
+                                  key={r}
+                                  type="button"
+                                  onClick={() => setResultado(item.id, r)}
+                                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                                    result?.resultado === r
+                                      ? r === "ok"
+                                        ? "border-green-300 bg-green-50 text-green-700"
+                                        : r === "falla"
+                                        ? "border-red-300 bg-red-50 text-red-700"
+                                        : "border-zinc-300 bg-zinc-100 text-zinc-500"
+                                      : "border-zinc-200 bg-white text-zinc-400 hover:bg-zinc-50"
+                                  }`}
+                                >
+                                  {r === "ok" ? "OK" : r === "falla" ? "FALLA" : "N/A"}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <input
+                            placeholder="Observación (opcional)"
+                            value={result?.observacion || ""}
+                            onChange={(e) => setObservacion(item.id, e.target.value)}
+                            className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Step 4: Checklist */}
-          {selectedPlantilla && (
+          {/* Step 6: Conclusiones */}
+          {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">4. Lista de chequeo</h3>
-              <p className="mb-4 text-xs text-zinc-400">
-                {selectedPlantilla.nombre}{selectedPlantilla.descripcion ? ` — ${selectedPlantilla.descripcion}` : ""}
-              </p>
-
-              <div className="space-y-3">
-                {selectedPlantilla.items.map((item) => {
-                  const result = checkResults[item.id];
-                  return (
-                    <div key={item.id} className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-brand-secondary">
-                            {item.nombre}
-                            {item.obligatorio && <span className="ml-1 text-red-400">*</span>}
-                          </p>
-                          <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
-                            {item.categoria}
-                          </span>
-                        </div>
-                        <div className="flex shrink-0 gap-2">
-                          {(["ok", "falla", "na"] as const).map((r) => (
-                            <button
-                              key={r}
-                              type="button"
-                              onClick={() => setResultado(item.id, r)}
-                              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-                                result?.resultado === r
-                                  ? r === "ok"
-                                    ? "border-green-300 bg-green-50 text-green-700"
-                                    : r === "falla"
-                                    ? "border-red-300 bg-red-50 text-red-700"
-                                    : "border-zinc-300 bg-zinc-100 text-zinc-500"
-                                  : "border-zinc-200 bg-white text-zinc-400 hover:bg-zinc-50"
-                              }`}
-                            >
-                              {r === "ok" ? "OK" : r === "falla" ? "FALLA" : "N/A"}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <input
-                        placeholder="Observación (opcional)"
-                        value={result?.observacion || ""}
-                        onChange={(e) => setObservacion(item.id, e.target.value)}
-                        className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Datos del servicio */}
-          <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-            <h3 className="mb-4 font-semibold text-brand-secondary">5. Datos del servicio</h3>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="mb-4">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-600">Orden de servicio</label>
-                <input
-                  name="orden_servicio"
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                  placeholder="N° de orden del cliente"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-600">N° de informe</label>
-                <input
-                  name="numero_informe"
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                  placeholder="N° interno de informe"
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Profesional que ejecuta</label>
-              <input
-                name="profesional"
-                defaultValue={profile?.nombre || ""}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                placeholder="Nombre del técnico o profesional"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Profesional que aprueba</label>
-              <input
-                name="aprobador"
-                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                placeholder="Nombre de quien aprueba el servicio"
-              />
-            </div>
-
-            <div className="mb-4 grid gap-4 sm:grid-cols-2">
-              <SignaturePad label="Firma del profesional que ejecuta" name="firma_tecnico" />
-              <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" />
-              <SignaturePad label="Firma de quien recibe a satisfacción" name="firma_recibe" />
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Tipo de servicio *</label>
-              <select
-                name="tipo"
-                required
-                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-              >
-                <option value="">Seleccionar...</option>
-                {TIPOS_SERVICIO.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Observaciones / Hallazgos</label>
-              <textarea
-                name="observaciones"
-                rows={4}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                placeholder="Observaciones generales del servicio..."
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Conclusión</label>
+              <h3 className="mb-4 font-semibold text-brand-secondary">6. Conclusiones</h3>
               <textarea
                 name="conclusion"
                 rows={3}
@@ -523,56 +521,80 @@ export default function NuevoInformePage() {
                 placeholder="Estado final del equipo, recomendaciones..."
               />
             </div>
-          </div>
+          )}
 
-          {/* Step 6: Photos */}
-          <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-            <h3 className="mb-4 font-semibold text-brand-secondary">6. Fotos de evidencia</h3>
+          {/* Step 7: Anexo fotográfico */}
+          {selectedEquipo && (
+            <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
+              <h3 className="mb-4 font-semibold text-brand-secondary">7. Anexo fotográfico</h3>
 
-            <div className="mb-4 flex flex-wrap gap-3">
-              {photos.map((url) => (
-                <div key={url} className="relative h-24 w-24 overflow-hidden rounded-lg border border-zinc-200">
-                  <Image src={url} alt="Evidencia" fill className="object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(url)}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={uploadPhoto}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 shadow-soft transition-colors hover:bg-zinc-50 disabled:opacity-50"
-              >
-                {uploading ? "Subiendo..." : "+ Agregar foto"}
-              </button>
-              <span className="text-xs text-zinc-400">
-                {photos.length} foto{photos.length !== 1 ? "s" : ""} agregada{photos.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            {uploadError && (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {uploadError}
+              <div className="mb-4 flex flex-wrap gap-3">
+                {photos.map((url) => (
+                  <div key={url} className="relative h-24 w-24 overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Evidencia" fill className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(url)}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
 
-          {/* Step 7: Vista previa */}
-          {!preview && (
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,.heic,.heif,.heics,.heifs,.dng"
+                  onChange={uploadPhoto}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 shadow-soft transition-colors hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  {uploading ? "Subiendo..." : "+ Agregar foto"}
+                </button>
+                <span className="text-xs text-zinc-400">
+                  {photos.length} foto{photos.length !== 1 ? "s" : ""} agregada{photos.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              {uploadError && (
+                <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {uploadError}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 8: Firmas */}
+          {selectedEquipo && (
+            <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
+              <h3 className="mb-4 font-semibold text-brand-secondary">8. Firmas</h3>
+
+              <div className="mb-4">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-600">Profesional que aprueba</label>
+                <input
+                  name="aprobador"
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  placeholder="Nombre de quien aprueba el servicio"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SignaturePad label="Firma del profesional que ejecuta" name="firma_tecnico" />
+                <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" />
+                <SignaturePad label="Firma de quien recibe a satisfacción" name="firma_recibe" />
+              </div>
+            </div>
+          )}
+
+          {/* Step 9: Vista previa */}
+          {selectedEquipo && !preview && (
             <div className="flex justify-center">
               <button
                 type="button"
@@ -586,6 +608,7 @@ export default function NuevoInformePage() {
                     tipo: fd.get("tipo"),
                     observaciones: fd.get("observaciones"),
                     conclusion: fd.get("conclusion"),
+                    fecha: fd.get("fecha"),
                   });
                   setPreview(true);
                   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
@@ -597,9 +620,9 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {preview && previewData && (
+          {selectedEquipo && preview && previewData && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">7. Vista previa del informe</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">9. Vista previa del informe</h3>
               <p className="mb-4 text-xs text-zinc-400">Revisa los datos antes de generar el informe. Puedes volver arriba para editar cualquier sección.</p>
 
               <div className="mb-4 grid gap-4 sm:grid-cols-2">
@@ -658,6 +681,7 @@ export default function NuevoInformePage() {
                     {previewData.tipo && <p><span className="text-zinc-400">Tipo:</span> <span className="text-zinc-700">{previewData.tipo}</span></p>}
                     {previewData.orden_servicio && <p><span className="text-zinc-400">Orden:</span> <span className="text-zinc-700">{previewData.orden_servicio}</span></p>}
                     {previewData.numero_informe && <p><span className="text-zinc-400">N° Informe:</span> <span className="text-zinc-700">{previewData.numero_informe}</span></p>}
+                    {previewData.fecha && <p><span className="text-zinc-400">Fecha:</span> <span className="text-zinc-700">{previewData.fecha}</span></p>}
                     {previewData.profesional && <p><span className="text-zinc-400">Profesional:</span> <span className="text-zinc-700">{previewData.profesional}</span></p>}
                     {previewData.aprobador && <p><span className="text-zinc-400">Aprueba:</span> <span className="text-zinc-700">{previewData.aprobador}</span></p>}
                     {!previewData.tipo && !previewData.orden_servicio && !previewData.numero_informe && !previewData.profesional && (

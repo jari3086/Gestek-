@@ -126,7 +126,7 @@ export default function EditarClientePage({
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-sm font-medium text-zinc-600">Logo del cliente</label>
                 <div className="flex items-center gap-4">
-                  <input ref={fileRef} type="file" accept="image/*" onChange={uploadLogo} className="hidden" />
+                  <input ref={fileRef} type="file" accept="image/*,.heic,.heif,.heics,.heifs,.dng" onChange={uploadLogo} className="hidden" />
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}

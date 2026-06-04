@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { logout } from "@/lib/actions/auth";
+import { AppHeader } from "@/components/AppHeader";
 import { RecordatoriosButton } from "./_components/RecordatoriosButton";
 import { hoyBogota, dentroDeDias } from "@/lib/date";
 
@@ -88,48 +88,38 @@ export default async function DashboardPage() {
     facturasImpagasQuery,
   ]);
 
+  const navLinks = [
+    ...(esAdmin || esCliente ? [{ href: "/equipos", label: "Equipos" }] : []),
+    { href: "/informes", label: "Informes" },
+    ...(esAdmin
+      ? [
+          { href: "/clientes", label: "Clientes" },
+          { href: "/facturas", label: "Facturación" },
+          { href: "/plantillas", label: "Plantillas" },
+          { href: "/empleados", label: "Empleados" },
+        ]
+      : []),
+    ...(esTecnico ? [{ href: "/informes/nuevo", label: "Generar informe", highlight: true as const }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <nav className="flex items-center gap-5">
-            {(esAdmin || esCliente) && (
-              <a href="/equipos" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Equipos</a>
-            )}
-            <a href="/informes" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Informes</a>
-            {esAdmin && (
-              <>
-                <a href="/clientes" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Clientes</a>
-                <a href="/facturas" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Facturación</a>
-                <a href="/plantillas" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Plantillas</a>
-                <a href="/empleados" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Empleados</a>
-              </>
-            )}
-            {esTecnico && (
-              <a href="/informes/nuevo" className="text-sm font-medium text-brand-primary hover:text-brand-primary-dark transition-colors">Generar informe</a>
-            )}
-          </nav>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-zinc-500">{profile?.nombre}</span>
-            <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary">
-              {esAdmin ? "Admin" : esTecnico ? "Técnico" : "Cliente"}
-            </span>
-            <form>
-              <button
-                type="submit"
-                formAction={logout}
-                className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-soft transition-colors hover:bg-zinc-50"
-              >
-                Cerrar sesión
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        links={navLinks}
+        userNombre={profile?.nombre}
+        userRole={profile?.role}
+        rightContent={
+          <form>
+            <button
+              type="submit"
+              formAction={logout}
+              className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-soft transition-colors hover:bg-zinc-50 md:w-auto"
+            >
+              Cerrar sesión
+            </button>
+          </form>
+        }
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">

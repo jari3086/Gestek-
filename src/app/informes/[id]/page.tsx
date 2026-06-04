@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AppHeader } from "@/components/AppHeader";
 import { ToggleVisibilidad } from "../_components/ToggleVisibilidad";
 import { EnviarEmail } from "../_components/EnviarEmail";
 import { EditarInformeForm } from "../_components/EditarInformeForm";
@@ -40,24 +40,33 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
     );
   }
 
+  const [checklistResult, fotosResult] = await Promise.all([
+    supabase
+      .from("checklist_resultados")
+      .select("resultados")
+      .eq("mantenimiento_id", id)
+      .maybeSingle(),
+    supabase
+      .from("fotos_mantenimiento")
+      .select("url")
+      .eq("mantenimiento_id", id),
+  ]);
+
+  const checklist = (checklistResult?.data?.resultados as any[]) || [];
+  const fotos = fotosResult?.data?.map((f) => f.url) || [];
+
   type EquipoData = Record<string, string | null | undefined> & { cliente?: Record<string, string | null | undefined> };
   const equipo = mant.equipo as EquipoData;
   const cliente = equipo?.cliente as Record<string, string | null | undefined> | undefined;
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <nav className="flex items-center gap-5">
-            <Link href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Dashboard</Link>
-            <Link href="/informes" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Informes</Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader
+        links={[
+          { href: "/dashboard", label: "Dashboard" },
+          { href: "/informes", label: "Informes" },
+        ]}
+      />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
@@ -122,15 +131,24 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
             </div>
 
             <div className="rounded-xl border border-zinc-200/60 bg-white p-5 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">Editar datos del servicio</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">Editar informe completo</h3>
+              <p className="mb-4 text-xs text-zinc-400">Puedes modificar todos los campos del informe, incluyendo la lista de chequeo, fotos y firmas.</p>
               <EditarInformeForm
                 id={id}
+                tipo={mant.tipo || ""}
+                fecha={mant.fecha || ""}
                 observaciones={mant.observaciones || ""}
                 conclusion={mant.conclusion || ""}
                 orden_servicio={mant.orden_servicio || ""}
                 numero_informe={mant.numero_informe || ""}
                 tecnico_nombre={mant.tecnico_nombre || ""}
-                firmaAprobador={mant.firma_aprobador || undefined}
+                aprobador_nombre={mant.aprobador_nombre || ""}
+                firma_tecnico={mant.firma_tecnico || undefined}
+                firma_aprobador={mant.firma_aprobador || undefined}
+                firma_recibe={mant.firma_recibe || undefined}
+                checklist={checklist}
+                fotos={fotos}
+                equipoNombre={equipo?.nombre || ""}
               />
             </div>
           </>

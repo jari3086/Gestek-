@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DeletePlantillaForm } from "./_components/DeletePlantillaButton";
+import { AppHeader } from "@/components/AppHeader";
 
 export default async function PlantillasPage() {
   const supabase = await createClient();
@@ -10,7 +10,7 @@ export default async function PlantillasPage() {
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
+    .from("profiles").select("role, nombre").eq("id", user.id).single();
 
   if (profile?.role !== "administrador") redirect("/dashboard");
 
@@ -21,18 +21,7 @@ export default async function PlantillasPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <nav className="flex items-center gap-5">
-            <a href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Dashboard</a>
-            <a href="/informes" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Informes</a>
-          </nav>
-        </div>
-      </header>
+      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }, { href: "/informes", label: "Informes" }]} userNombre={profile?.nombre} userRole={profile?.role} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">

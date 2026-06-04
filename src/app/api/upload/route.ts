@@ -7,16 +7,57 @@ import sharp from "sharp";
 export const maxDuration = 30;
 
 const WEB_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
-const CONVERTIBLE_TYPES = ["image/bmp", "image/tiff", "image/heic", "image/heif"];
+const CONVERTIBLE_TYPES = [
+  "image/bmp",
+  "image/tiff",
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+  "image/x-heic",
+  "image/x-heif",
+  "image/x-adobe-dng",
+  "image/x-raw",
+  "image/x-raw-adobe",
+  "image/dng",
+];
 const ALLOWED_TYPES = [...WEB_TYPES, ...CONVERTIBLE_TYPES, "application/pdf"];
 
-function needsConversion(mime: string) {
-  return CONVERTIBLE_TYPES.includes(mime);
+const EXT_MAP: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+};
+
+const EXT_TO_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+  bmp: "image/bmp",
+  tiff: "image/tiff",
+  tif: "image/tiff",
+  heic: "image/heic",
+  heif: "image/heif",
+  dng: "image/x-adobe-dng",
+};
+
+function detectMime(fileName: string, declaredType: string): string {
+  if (declaredType && declaredType !== "application/octet-stream") return declaredType;
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  return EXT_TO_MIME[ext] || "application/octet-stream";
 }
 
-function extFromMime(mime: string) {
-  if (mime === "image/jpeg") return "jpg";
-  return mime.split("/")[1] ?? "bin";
+function isConvertible(mime: string): boolean {
+  return CONVERTIBLE_TYPES.includes(mime) || mime === "image/x-adobe-dng" || mime === "image/dng";
+}
+
+function extFromMime(mime: string): string {
+  return EXT_MAP[mime] || (mime.split("/")[1] ?? "bin");
 }
 
 export async function POST(request: Request) {
@@ -41,19 +82,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Archivo demasiado grande (máx 10MB)" }, { status: 400 });
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: "Tipo de archivo no permitido: " + file.type }, { status: 400 });
+  const mime = detectMime(file.name, file.type);
+
+  if (!ALLOWED_TYPES.includes(mime)) {
+    return NextResponse.json({ error: "Tipo de archivo no permitido: " + mime }, { status: 400 });
   }
 
   let buffer: Buffer = Buffer.from(await file.arrayBuffer());
-  let contentType = file.type;
+  let contentType = mime;
 
-  if (needsConversion(file.type)) {
+  if (!WEB_TYPES.includes(mime)) {
     try {
       buffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
       contentType = "image/jpeg";
     } catch {
-      // si no se puede convertir, se sube el original
+      try {
+        buffer = await sharp(buffer).png().toBuffer();
+        contentType = "image/png";
+      } catch {
+        return NextResponse.json({ error: "No se pudo convertir la imagen. Formatos soportados: JPEG, PNG, WebP, HEIC, HEIF, DNG, BMP, TIFF." }, { status: 400 });
+      }
     }
   }
 

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -7,6 +6,7 @@ import EliminarFacturaButton from "./_components/EliminarFacturaButton";
 import { EnviarFacturaEmailButton } from "./_components/EnviarFacturaEmailButton";
 import { FiltrosFacturas } from "./_components/FiltrosFacturas";
 import { ExportCsvButton } from "@/components/ExportCsvButton";
+import { AppHeader } from "@/components/AppHeader";
 
 export default async function FacturasPage(props: {
   searchParams?: Promise<Record<string, string>>;
@@ -17,7 +17,7 @@ export default async function FacturasPage(props: {
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
+    .from("profiles").select("role, nombre").eq("id", user.id).single();
 
   const esAdmin = profile?.role === "administrador";
   const esCliente = profile?.role === "cliente";
@@ -58,24 +58,7 @@ export default async function FacturasPage(props: {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <div className="flex items-center gap-4">
-            {esAdmin && (
-              <Link href="/facturas/nueva" className="rounded-lg bg-brand-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-primary-dark">
-                + Nueva factura
-              </Link>
-            )}
-            <Link href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">
-              Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }]} userNombre={profile?.nombre} userRole={profile?.role} />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-2xl font-bold text-brand-secondary">Facturación</h2>

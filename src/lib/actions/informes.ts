@@ -27,12 +27,20 @@ export async function toggleVisibilidad(mantenimientoId: string, visible: boolea
 export async function actualizarInforme(
   mantenimientoId: string,
   data: {
+    tipo?: string;
+    fecha?: string;
     observaciones?: string;
     conclusion?: string;
     orden_servicio?: string;
     numero_informe?: string;
     tecnico_nombre?: string;
+    aprobador_nombre?: string;
+    firma_tecnico?: string;
     firma_aprobador?: string;
+    firma_recibe?: string;
+    checklist?: { nombre: string; categoria: string; resultado: string; observacion: string }[];
+    fotos_nuevas?: string[];
+    fotos_eliminar?: string[];
   },
 ) {
   const supabase = await createClient();
@@ -44,12 +52,17 @@ export async function actualizarInforme(
   if (profile?.role !== "administrador") return { error: "No autorizado" };
 
   const updates: Record<string, any> = {};
+  if (data.tipo !== undefined) updates.tipo = data.tipo;
+  if (data.fecha !== undefined) updates.fecha = data.fecha;
   if (data.observaciones !== undefined) updates.observaciones = data.observaciones;
   if (data.conclusion !== undefined) updates.conclusion = data.conclusion;
   if (data.orden_servicio !== undefined) updates.orden_servicio = data.orden_servicio;
   if (data.numero_informe !== undefined) updates.numero_informe = data.numero_informe;
   if (data.tecnico_nombre !== undefined) updates.tecnico_nombre = data.tecnico_nombre;
+  if (data.aprobador_nombre !== undefined) updates.aprobador_nombre = data.aprobador_nombre;
+  if (data.firma_tecnico !== undefined) updates.firma_tecnico = data.firma_tecnico;
   if (data.firma_aprobador !== undefined) updates.firma_aprobador = data.firma_aprobador;
+  if (data.firma_recibe !== undefined) updates.firma_recibe = data.firma_recibe;
 
   const { error } = await supabase
     .from("mantenimientos")
@@ -57,6 +70,52 @@ export async function actualizarInforme(
     .eq("id", mantenimientoId);
 
   if (error) return { error: error.message };
+
+  // Update checklist
+  if (data.checklist !== undefined) {
+    const existing = await supabase
+      .from("checklist_resultados")
+      .select("id")
+      .eq("mantenimiento_id", mantenimientoId)
+      .maybeSingle();
+
+    if (existing.data) {
+      await supabase
+        .from("checklist_resultados")
+        .update({ resultados: data.checklist })
+        .eq("id", existing.data.id);
+    } else {
+      await supabase
+        .from("checklist_resultados")
+        .insert({ mantenimiento_id: mantenimientoId, resultados: data.checklist });
+    }
+  }
+
+  // Add new photos
+  if (data.fotos_nuevas && data.fotos_nuevas.length > 0) {
+    const nuevosRegistros = data.fotos_nuevas.map((url) => ({
+      mantenimiento_id: mantenimientoId,
+      url,
+    }));
+    await supabase.from("fotos_mantenimiento").insert(nuevosRegistros);
+  }
+
+  // Delete removed photos (from DB and Storage)
+  if (data.fotos_eliminar && data.fotos_eliminar.length > 0) {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    for (const url of data.fotos_eliminar) {
+      const path = url.split("/informes/")[1];
+      if (path) {
+        await admin.storage.from("informes").remove([path]);
+      }
+    }
+    await supabase
+      .from("fotos_mantenimiento")
+      .delete()
+      .eq("mantenimiento_id", mantenimientoId)
+      .in("url", data.fotos_eliminar);
+  }
 
   // Regenerate PDF with updated data
   try {
@@ -84,6 +143,7 @@ export async function actualizarInforme(
 
     const { generatePdfBuffer } = await import("@/lib/pdf/generate-pdf");
     const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
 
     const pdfBuffer = await generatePdfBuffer({
       equipo,
@@ -96,7 +156,7 @@ export async function actualizarInforme(
         observaciones: mant.observaciones || undefined,
         conclusion: mant.conclusion || undefined,
         tecnico_nombre: mant.tecnico_nombre || "",
-        aprobador_nombre: profile.nombre || undefined,
+        aprobador_nombre: mant.aprobador_nombre || undefined,
         firma_tecnico: mant.firma_tecnico || undefined,
         firma_aprobador: mant.firma_aprobador || undefined,
         firma_recibe: mant.firma_recibe || undefined,
@@ -106,7 +166,6 @@ export async function actualizarInforme(
     });
 
     const fileName = `informes/${user.id}/${Date.now()}.pdf`;
-    const admin = createAdminClient();
     const { error: uploadError } = await admin.storage
       .from("informes")
       .upload(fileName, pdfBuffer, { contentType: "application/pdf", upsert: true });

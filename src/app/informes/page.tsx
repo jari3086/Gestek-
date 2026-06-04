@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AppHeader } from "@/components/AppHeader";
 import { FiltroEquipoCliente } from "./_components/FiltroEquipoCliente";
 import { FiltrosAdminInformes } from "./_components/FiltrosAdminInformes";
 import { ExportCsvButton } from "@/components/ExportCsvButton";
@@ -82,22 +82,18 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
 
   const equipoSeleccionado = searchParams?.equipo_id || "";
 
+  const navLinks = [
+    { href: "/dashboard", label: "Dashboard" },
+    ...(esAdmin || esTecnico ? [{ href: "/informes/nuevo", label: "+ Nuevo informe", highlight: true as const }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <nav className="flex items-center gap-5">
-            <Link href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Dashboard</Link>
-            {(esAdmin || esTecnico) && (
-              <Link href="/informes/nuevo" className="text-sm font-medium text-brand-primary hover:text-brand-primary transition-colors font-semibold">+ Nuevo informe</Link>
-            )}
-          </nav>
-        </div>
-      </header>
+      <AppHeader
+        links={navLinks}
+        userNombre={profile?.nombre}
+        userRole={profile?.role}
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

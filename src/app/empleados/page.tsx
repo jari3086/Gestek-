@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DeleteEmpleadoButton } from "./_components/DeleteEmpleadoButton";
+import { AppHeader } from "@/components/AppHeader";
 
 export default async function EmpleadosPage() {
   const supabase = await createClient();
@@ -28,22 +28,7 @@ export default async function EmpleadosPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <header className="border-b border-zinc-200/60 bg-white shadow-soft">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard">
-              <Image src="/logo gestek.png" alt="Gestek" width={36} height={36} className="h-9 w-auto" />
-            </Link>
-            <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-brand-primary">
-              Dashboard
-            </Link>
-            <span className="text-sm text-zinc-500">{profile.nombre}</span>
-          </div>
-        </div>
-      </header>
+      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }]} userNombre={profile?.nombre} userRole={profile?.role} />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
