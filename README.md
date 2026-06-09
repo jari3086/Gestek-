@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GESTEK — Sistema de Gestión de Equipos Biomédicos
 
-## Getting Started
+Sistema web para la gestión de inventario, mantenimiento, informes y facturación de equipos biomédicos.
 
-First, run the development server:
+**URL de producción:** [https://gestek-gu3mihco8-juliana-agudelo-s-projects.vercel.app](https://gestek-gu3mihco8-juliana-agudelo-s-projects.vercel.app)
+
+---
+
+## Stack tecnológico
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | Next.js 16 (App Router), React 19, TypeScript |
+| Estilos | Tailwind CSS v4 |
+| Base de datos | PostgreSQL (Supabase) |
+| Autenticación | Supabase Auth (SSR) |
+| Almacenamiento | Supabase Storage |
+| PDF | @react-pdf/renderer |
+| Testing | Vitest |
+
+## Módulos
+
+1. **Autenticación** — Login/logout con roles (admin, técnico, cliente)
+2. **Clientes** — CRUD de clientes con logo y datos fiscales
+3. **Equipos** — CRUD de equipos biomédicos con fechas de mantenimiento
+4. **Informes** — Generación de PDF con checklist, fotos y firmas digitales
+5. **Mantenimientos** — Historial de mantenimientos por equipo
+6. **Facturación** — Facturas con preparación DIAN
+7. **Plantillas** — Checklist personalizables por tipo de equipo
+8. **Empleados** — Gestión de usuarios técnicos
+9. **Dashboard** — Panel con estadísticas y alertas
+
+## Requisitos
+
+- Node.js 20.x+
+- npm 10.x+
+- Cuenta en Supabase (gratuita)
+- Cuenta en Vercel (gratuita, opcional para deploy)
+
+## Instalación
 
 ```bash
+# Clonar el repositorio
+git clone <url-del-repositorio>
+cd biomed-inventory
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env.local
+# Editar .env.local con tus credenciales de Supabase
+
+# Iniciar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<proyecto>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+RESEND_API_KEY=<resend-api-key>  # Opcional
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts disponibles
 
-## Learn More
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Compilación para producción |
+| `npm start` | Servidor de producción |
+| `npm run lint` | ESLint |
+| `npm test` | Pruebas unitarias (Vitest) |
 
-To learn more about Next.js, take a look at the following resources:
+## Pruebas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm test              # Una sola ejecución
+npm run test:watch    # Modo desarrollo
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Actualmente **41 pruebas** distribuidas en 3 archivos:
+- `schemas.test.ts` — Validación Zod (20 casos)
+- `rate-limit.test.ts` — Rate limiter (12 casos)
+- `audit.test.ts` — Auditoría (9 casos)
 
-## Deploy on Vercel
+## Documentación
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+La documentación completa del proyecto se encuentra en la carpeta [`docs/`](docs/):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Módulos del sistema](docs/modulos/)
+- [Informe de pruebas](docs/pruebas/informe-pruebas.md)
+- [Configuración de servidores y BD](docs/configuracion/servidores-bd.md)
+- [Ambientes de desarrollo y pruebas](docs/configuracion/ambientes.md)
+
+## Licencia
+
+Uso académico — Tesis universitaria

@@ -59,6 +59,7 @@ export function EditarInformeForm({
   const [checklist, setChecklist] = useState<CheckItem[]>(initialChecklist || []);
   const [photos, setPhotos] = useState<string[]>(initialFotos || []);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -100,34 +101,46 @@ export function EditarInformeForm({
   );
 
   const uploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploadError("");
     setUploading(true);
+    setUploadProgress("");
 
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError("La foto no puede superar los 5 MB");
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
-    }
+    const MAX_SIZE = 5 * 1024 * 1024;
+    let uploaded = 0;
+    let errors: string[] = [];
 
-    const formData = new FormData();
-    formData.append("file", file);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress(`Subiendo ${i + 1} de ${files.length}...`);
 
-    try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setUploadError(data.error || "Error al subir la foto");
-      } else if (data.url) {
-        setPhotos((prev) => [...prev, data.url]);
+      if (file.size > MAX_SIZE) {
+        errors.push(`"${file.name}" supera los 5 MB`);
+        continue;
       }
-    } catch {
-      setUploadError("Error de conexión al subir la foto");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          errors.push(data.error || `Error al subir "${file.name}"`);
+        } else if (data.url) {
+          setPhotos((prev) => [...prev, data.url]);
+          uploaded++;
+        }
+      } catch {
+        errors.push(`Error de conexión al subir "${file.name}"`);
+      }
     }
+
     setUploading(false);
+    setUploadProgress(uploaded > 0 ? `Subidas ${uploaded} foto${uploaded !== 1 ? "s" : ""}` : "");
+    if (errors.length > 0) setUploadError(errors.join(". "));
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -153,8 +166,10 @@ export function EditarInformeForm({
 
   return (
     <form action={action} className="space-y-4">
-      {/* Hidden field to track current photos */}
+      {/* Hidden fields to track current photos and preserve existing signatures */}
       <input type="hidden" name="_fotos_actuales" value={JSON.stringify(photos)} />
+      <input type="hidden" name="firma_tecnico" value={firma_tecnico || ""} />
+      <input type="hidden" name="firma_recibe" value={firma_recibe || ""} />
 
       {/* Datos del servicio */}
       <div className="rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
@@ -309,14 +324,14 @@ export function EditarInformeForm({
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <input ref={fileRef} type="file" accept="image/*,.heic,.heif,.heics,.heifs,.dng" onChange={uploadPhoto} className="hidden" />
+          <input ref={fileRef} type="file" multiple accept="image/*,.heic,.heif,.heics,.heifs,.dng" onChange={uploadPhoto} className="hidden" />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
             className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 shadow-soft transition-colors hover:bg-zinc-50 disabled:opacity-50"
           >
-            {uploading ? "Subiendo..." : "+ Agregar foto"}
+            {uploading ? uploadProgress || "Subiendo..." : "+ Agregar fotos"}
           </button>
           <span className="text-xs text-zinc-400">
             {photos.length} foto{photos.length !== 1 ? "s" : ""}
@@ -333,9 +348,33 @@ export function EditarInformeForm({
       <div className="rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
         <h4 className="mb-3 text-sm font-semibold text-brand-secondary">Firmas</h4>
         <div className="grid gap-4 sm:grid-cols-2">
-          <SignaturePad label="Firma del profesional que ejecuta" name="firma_tecnico" defaultValue={firma_tecnico} />
+          {/* Firma técnico — solo lectura */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-600">Firma del profesional que ejecuta</label>
+            {firma_tecnico ? (
+              <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2">
+                <Image src={firma_tecnico} alt="Firma del técnico" width={200} height={60} className="h-auto w-auto max-h-[60px] object-contain" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <span className="text-sm text-zinc-400">Sin firmar</span>
+              </div>
+            )}
+          </div>
           <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" defaultValue={firma_aprobador} />
-          <SignaturePad label="Firma de quien recibe a satisfacción" name="firma_recibe" defaultValue={firma_recibe} />
+          {/* Firma recibe — solo lectura */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-600">Firma de quien recibe a satisfacción</label>
+            {firma_recibe ? (
+              <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2">
+                <Image src={firma_recibe} alt="Firma de quien recibe" width={200} height={60} className="h-auto w-auto max-h-[60px] object-contain" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <span className="text-sm text-zinc-400">Sin firmar</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

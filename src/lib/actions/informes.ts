@@ -60,9 +60,7 @@ export async function actualizarInforme(
   if (data.numero_informe !== undefined) updates.numero_informe = data.numero_informe;
   if (data.tecnico_nombre !== undefined) updates.tecnico_nombre = data.tecnico_nombre;
   if (data.aprobador_nombre !== undefined) updates.aprobador_nombre = data.aprobador_nombre;
-  if (data.firma_tecnico !== undefined) updates.firma_tecnico = data.firma_tecnico;
   if (data.firma_aprobador !== undefined) updates.firma_aprobador = data.firma_aprobador;
-  if (data.firma_recibe !== undefined) updates.firma_recibe = data.firma_recibe;
 
   const { error } = await supabase
     .from("mantenimientos")
