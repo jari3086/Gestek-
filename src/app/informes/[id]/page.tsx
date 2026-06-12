@@ -146,6 +146,8 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
                 firma_tecnico={mant.firma_tecnico || undefined}
                 firma_aprobador={mant.firma_aprobador || undefined}
                 firma_recibe={mant.firma_recibe || undefined}
+                proximo_mantenimiento={equipo?.fecha_proximo_mantenimiento || ""}
+                proxima_calibracion={equipo?.fecha_proxima_calibracion || ""}
                 checklist={checklist}
                 fotos={fotos}
                 equipoNombre={equipo?.nombre || ""}

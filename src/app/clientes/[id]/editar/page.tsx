@@ -124,6 +124,59 @@ export default function EditarClientePage({
               </div>
 
               <div className="sm:col-span-2">
+                <label className="mb-1 block text-sm font-medium text-zinc-600">Correo electrónico</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  defaultValue={cliente?.email || ""}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600">Régimen</label>
+                <select
+                  name="regimen"
+                  defaultValue={cliente?.regimen || "ordinario"}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="ordinario">Régimen ordinario</option>
+                  <option value="simple">Régimen simple de tributación</option>
+                  <option value="especial">Régimen especial</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600">Tipo persona</label>
+                <select
+                  name="tipo_persona"
+                  defaultValue={cliente?.tipo_persona || "juridica"}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="juridica">Jurídica</option>
+                  <option value="natural">Natural</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600">Departamento</label>
+                <input
+                  name="departamento"
+                  defaultValue={cliente?.departamento || ""}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  placeholder="Cundinamarca"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600">Código postal</label>
+                <input
+                  name="codigo_postal"
+                  defaultValue={cliente?.codigo_postal || ""}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  placeholder="110111"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
                 <label className="mb-1 block text-sm font-medium text-zinc-600">Logo del cliente</label>
                 <div className="flex items-center gap-4">
                   <input ref={fileRef} type="file" accept="image/*,.heic,.heif,.heics,.heifs,.dng" onChange={uploadLogo} className="hidden" />

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
     const body = await request.json();
-    const { equipo, cliente, mantenimiento } = body;
+    const { equipo, cliente, mantenimiento, sede, proximo_mantenimiento, proxima_calibracion } = body;
     const equipoId = body.equipoId;
 
     if (!equipo || !cliente || !mantenimiento) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const pdfBuffer = await generatePdfBuffer({ equipo, cliente, mantenimiento });
+    const pdfBuffer = await generatePdfBuffer({ equipo, cliente, mantenimiento, sede });
 
     const fileName = `informes/${user.id}/${Date.now()}.pdf`;
 
@@ -89,6 +89,14 @@ export async function POST(request: NextRequest) {
           url,
         }));
         await supabase.from("fotos_mantenimiento").insert(fotosRecords);
+      }
+
+      // Actualizar fechas de próximo mantenimiento/calibración en el equipo
+      const equipoUpdates: Record<string, string> = {};
+      if (proximo_mantenimiento) equipoUpdates.fecha_proximo_mantenimiento = proximo_mantenimiento;
+      if (proxima_calibracion) equipoUpdates.fecha_proxima_calibracion = proxima_calibracion;
+      if (Object.keys(equipoUpdates).length > 0) {
+        await supabase.from("equipos").update(equipoUpdates).eq("id", equipoId);
       }
     }
 

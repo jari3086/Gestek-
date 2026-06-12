@@ -202,14 +202,15 @@ interface InformeEquipoProps {
   logoBase64?: string | null;
   logoClienteBase64?: string | null;
   equipo: {
-    nombre: string;
     id_cliente?: string | null;
+    nombre: string;
     tipo: string;
     marca?: string | null;
     modelo?: string | null;
     serie: string;
     accesorios?: string | null;
     ubicacion: string;
+    fecha_proximo_mantenimiento?: string | null;
   };
   cliente: {
     nombre: string;
@@ -217,6 +218,11 @@ interface InformeEquipoProps {
     direccion?: string | null;
     ciudad?: string | null;
     email: string;
+  };
+  sede?: {
+    nombre?: string;
+    ciudad?: string | null;
+    direccion?: string | null;
   };
   mantenimiento: {
     tipo: string;
@@ -257,6 +263,7 @@ export function InformeEquipo({
   logoClienteBase64,
   equipo,
   cliente,
+  sede,
   mantenimiento,
   fechaActual,
 }: InformeEquipoProps) {
@@ -304,14 +311,20 @@ export function InformeEquipo({
               </View>
               <View style={styles.gridItem}>
                 <View style={styles.row}>
-                  <Text style={styles.label}>Dirección:</Text>
-                  <Text style={styles.value}>{cliente.direccion || "—"}</Text>
+                  <Text style={styles.label}>Sede:</Text>
+                  <Text style={styles.value}>{sede?.nombre || "—"}</Text>
                 </View>
               </View>
               <View style={styles.gridItem}>
                 <View style={styles.row}>
                   <Text style={styles.label}>Ciudad:</Text>
-                  <Text style={styles.value}>{cliente.ciudad || "—"}</Text>
+                  <Text style={styles.value}>{sede?.ciudad || cliente.ciudad || "—"}</Text>
+                </View>
+              </View>
+              <View style={styles.gridItem}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Dirección:</Text>
+                  <Text style={styles.value}>{sede?.direccion || cliente.direccion || "—"}</Text>
                 </View>
               </View>
               <View style={styles.gridItem}>
@@ -388,18 +401,6 @@ export function InformeEquipo({
                   <Text style={styles.value}>{mantenimiento.tipo}</Text>
                 </View>
               </View>
-              <View style={styles.gridItem}>
-                <View style={styles.row}>
-                  <Text style={styles.label}>Fecha:</Text>
-                  <Text style={styles.value}>{mantenimiento.fecha}</Text>
-                </View>
-              </View>
-              <View style={styles.gridItem}>
-                <View style={styles.row}>
-                  <Text style={styles.label}>Profesional:</Text>
-                  <Text style={styles.value}>{mantenimiento.tecnico_nombre}</Text>
-                </View>
-              </View>
               {mantenimiento.orden_servicio && (
                 <View style={styles.gridItem}>
                   <View style={styles.row}>
@@ -408,11 +409,31 @@ export function InformeEquipo({
                   </View>
                 </View>
               )}
+              <View style={styles.gridItem}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Profesional:</Text>
+                  <Text style={styles.value}>{mantenimiento.tecnico_nombre}</Text>
+                </View>
+              </View>
               {mantenimiento.numero_informe && (
                 <View style={styles.gridItem}>
                   <View style={styles.row}>
                     <Text style={styles.label}>N° de informe:</Text>
                     <Text style={styles.value}>{mantenimiento.numero_informe}</Text>
+                  </View>
+                </View>
+              )}
+              <View style={styles.gridItem}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Fecha ejecución:</Text>
+                  <Text style={styles.value}>{mantenimiento.fecha}</Text>
+                </View>
+              </View>
+              {equipo.fecha_proximo_mantenimiento && (
+                <View style={styles.gridItem}>
+                  <View style={styles.row}>
+                    <Text style={styles.label}>Próximo mantenimiento:</Text>
+                    <Text style={styles.value}>{equipo.fecha_proximo_mantenimiento}</Text>
                   </View>
                 </View>
               )}

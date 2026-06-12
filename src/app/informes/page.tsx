@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
-import { FiltroEquipoCliente } from "./_components/FiltroEquipoCliente";
 import { FiltrosAdminInformes } from "./_components/FiltrosAdminInformes";
+import { FiltrosClienteInformes } from "./_components/FiltrosClienteInformes";
 import { ExportCsvButton } from "@/components/ExportCsvButton";
 
 export default async function InformesListPage(props: { searchParams?: Promise<Record<string, string>> }) {
@@ -21,13 +21,24 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
 
   let query = supabase
     .from("mantenimientos")
-    .select("*, equipo:equipo_id!inner(nombre, serie, marca, cliente_id)")
+    .select("*, equipo:equipo_id!inner(nombre, serie, marca, cliente_id, sede_id)")
     .order("created_at", { ascending: false });
 
   if (searchParams?.equipo_id) {
     query = query.eq("equipo_id", searchParams.equipo_id);
   } else if (searchParams?.cliente_id && esAdmin) {
     query = query.eq("equipo.cliente_id", searchParams.cliente_id);
+  }
+
+  if (searchParams?.sede_id) {
+    query = query.eq("equipo.sede_id", searchParams.sede_id);
+  }
+
+  if (searchParams?.fecha_inicio) {
+    query = query.gte("fecha", searchParams.fecha_inicio);
+  }
+  if (searchParams?.fecha_fin) {
+    query = query.lte("fecha", searchParams.fecha_fin);
   }
 
   if (searchParams?.tecnico_id && esAdmin) {
@@ -42,8 +53,9 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
 
   const { data: mantenimientos } = await query.limit(100);
 
-  // Para clientes, obtener sus equipos para el filtro
+  // Para clientes, obtener sus equipos y sedes para los filtros
   let equiposCliente: any[] = [];
+  let sedesCliente: any[] = [];
   if (esCliente) {
     const { data: eqs } = await supabase
       .from("equipos")
@@ -51,6 +63,13 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
       .eq("cliente_id", user.id)
       .order("nombre");
     equiposCliente = eqs || [];
+
+    const { data: sds } = await supabase
+      .from("sedes")
+      .select("id, nombre")
+      .eq("cliente_id", user.id)
+      .order("nombre");
+    sedesCliente = sds || [];
   }
 
   // Para admin, obtener datos para filtros
@@ -112,9 +131,10 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
             />
           )}
           {esCliente && equiposCliente.length > 0 && (
-            <FiltroEquipoCliente
+            <FiltrosClienteInformes
               defaultValue={equipoSeleccionado}
               equipos={equiposCliente}
+              sedes={sedesCliente}
             />
           )}
           {esAdmin && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { crearEquipo } from "@/lib/actions/equipos";
 
 function autoCalcProximo() {
@@ -16,13 +16,21 @@ function autoCalcProximo() {
 
 export function EquipoForm({
   clientes,
+  sedes,
+  equipo,
 }: {
   clientes: { id: string; nombre: string }[];
+  sedes: { id: string; cliente_id: string; nombre: string }[];
+  equipo?: any;
 }) {
   const [state, formAction, pending] = useActionState(crearEquipo, undefined);
+  const [clienteId, setClienteId] = useState(equipo?.cliente_id || "");
+
+  const sedesFiltradas = sedes.filter((s) => s.cliente_id === clienteId);
 
   return (
     <form action={formAction} className="space-y-5 rounded-xl bg-white p-6 shadow-card">
+      {equipo && <input type="hidden" name="id" value={equipo.id} />}
       {state?.error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{state.error}</div>
       )}
@@ -41,6 +49,8 @@ export function EquipoForm({
           <select
             name="cliente_id"
             required
+            value={clienteId}
+            onChange={(e) => setClienteId(e.target.value)}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           >
             <option value="">Seleccionar cliente</option>
@@ -52,6 +62,24 @@ export function EquipoForm({
           </select>
         </div>
 
+        {clienteId && sedesFiltradas.length > 0 && (
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-600">Sede / Sucursal</label>
+            <select
+              name="sede_id"
+              defaultValue={equipo?.sede_id || ""}
+              className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+            >
+              <option value="">Sin sede</option>
+              {sedesFiltradas.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="sm:col-span-2">
           <label className="mb-1 block text-sm font-medium text-zinc-600">
             Nombre / Descripción del equipo
@@ -59,6 +87,7 @@ export function EquipoForm({
           <input
             name="nombre"
             required
+            defaultValue={equipo?.nombre || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="Monitor de signos vitales"
           />
@@ -70,6 +99,7 @@ export function EquipoForm({
           </label>
           <input
             name="id_cliente"
+            defaultValue={equipo?.id_cliente || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="EQ-001"
           />
@@ -80,6 +110,7 @@ export function EquipoForm({
           <input
             name="tipo"
             required
+            defaultValue={equipo?.tipo || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="Monitor"
           />
@@ -89,6 +120,7 @@ export function EquipoForm({
           <label className="mb-1 block text-sm font-medium text-zinc-600">Marca</label>
           <input
             name="marca"
+            defaultValue={equipo?.marca || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="Mindray"
           />
@@ -98,6 +130,7 @@ export function EquipoForm({
           <label className="mb-1 block text-sm font-medium text-zinc-600">Modelo</label>
           <input
             name="modelo"
+            defaultValue={equipo?.modelo || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="uMEC12"
           />
@@ -110,6 +143,7 @@ export function EquipoForm({
           <input
             name="serie"
             required
+            defaultValue={equipo?.serie || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="SN-2024-001"
           />
@@ -122,6 +156,7 @@ export function EquipoForm({
           <textarea
             name="accesorios"
             rows={2}
+            defaultValue={equipo?.accesorios || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="Cables, sensores, batería, cargador..."
           />
@@ -132,6 +167,7 @@ export function EquipoForm({
           <input
             name="ubicacion"
             required
+            defaultValue={equipo?.ubicacion || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             placeholder="Hospital Central - Piso 3 - Sala 301"
           />
@@ -149,6 +185,7 @@ export function EquipoForm({
             id="nuevo_fecha_ultimo_mantenimiento"
             name="fecha_ultimo_mantenimiento"
             type="date"
+            defaultValue={equipo?.fecha_ultimo_mantenimiento || ""}
             onChange={autoCalcProximo}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
@@ -162,6 +199,7 @@ export function EquipoForm({
             id="nuevo_fecha_proximo_mantenimiento"
             name="fecha_proximo_mantenimiento"
             type="date"
+            defaultValue={equipo?.fecha_proximo_mantenimiento || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -174,7 +212,7 @@ export function EquipoForm({
             id="nuevo_periodicidad_mantenimiento"
             name="periodicidad_mantenimiento"
             onChange={autoCalcProximo}
-            defaultValue="0"
+            defaultValue={equipo?.periodicidad_mantenimiento ?? "0"}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           >
             <option value="0">No recurrente</option>
@@ -194,6 +232,7 @@ export function EquipoForm({
           <input
             name="fecha_ultima_calibracion"
             type="date"
+            defaultValue={equipo?.fecha_ultima_calibracion || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -205,6 +244,7 @@ export function EquipoForm({
           <input
             name="fecha_proxima_calibracion"
             type="date"
+            defaultValue={equipo?.fecha_proxima_calibracion || ""}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>

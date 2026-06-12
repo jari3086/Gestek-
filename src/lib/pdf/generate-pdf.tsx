@@ -7,6 +7,7 @@ export async function generatePdfBuffer(params: {
   equipo: any;
   cliente: any;
   mantenimiento: any;
+  sede?: any;
 }) {
   let logoBase64: string | null = null;
   try {
@@ -37,6 +38,7 @@ export async function generatePdfBuffer(params: {
       logoClienteBase64={logoClienteBase64}
       equipo={params.equipo}
       cliente={params.cliente}
+      sede={params.sede}
       mantenimiento={params.mantenimiento}
       fechaActual={fechaActual}
     />,

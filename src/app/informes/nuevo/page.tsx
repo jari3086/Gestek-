@@ -181,99 +181,131 @@ export default function NuevoInformePage() {
   const generarYDescargar = async (descargar: boolean) => {
     if (!formRef.current) return;
     setGenerando(true);
-    const formData = new FormData(formRef.current);
+    setUploadError("");
+    try {
+      const formData = new FormData(formRef.current);
 
-    const equipoId = formData.get("equipo_id") as string;
-    const observaciones = formData.get("observaciones") as string;
-    const tipo = formData.get("tipo") as string;
-    const conclusion = formData.get("conclusion") as string;
-    const ordenServicio = formData.get("orden_servicio") as string;
-    const numeroInforme = formData.get("numero_informe") as string;
-    const fecha = formData.get("fecha") as string;
-    const profesional = formData.get("profesional") as string;
-    const aprobador = formData.get("aprobador") as string;
-    const firmaTecnico = formData.get("firma_tecnico") as string;
-    const firmaAprobador = formData.get("firma_aprobador") as string;
-    const firmaRecibe = formData.get("firma_recibe") as string;
-    const eq = equipos.find((eq: any) => eq.id === equipoId);
+      const equipoId = formData.get("equipo_id") as string;
+      const observaciones = formData.get("observaciones") as string;
+      const tipo = formData.get("tipo") as string;
+      const conclusion = formData.get("conclusion") as string;
+      const ordenServicio = formData.get("orden_servicio") as string;
+      const numeroInforme = formData.get("numero_informe") as string;
+      const fecha = formData.get("fecha") as string;
+      const profesional = formData.get("profesional") as string;
+      const aprobador = formData.get("aprobador") as string;
+      const proximoMantenimiento = formData.get("proximo_mantenimiento") as string;
+      const proximaCalibracion = formData.get("proxima_calibracion") as string;
+      const firmaTecnico = formData.get("firma_tecnico") as string;
+      const firmaAprobador = formData.get("firma_aprobador") as string;
+      const firmaRecibe = formData.get("firma_recibe") as string;
+      const eq = equipos.find((eq: any) => eq.id === equipoId);
+      if (!eq || !eq.cliente_id) {
+        setUploadError("Equipo no válido");
+        setGenerando(false);
+        return;
+      }
 
-    if (!eq || !eq.cliente_id) return;
+      const res = await fetch(`/api/equipos/${equipoId}`);
+      if (!res.ok) {
+        setUploadError("Error al obtener datos del equipo");
+        setGenerando(false);
+        return;
+      }
+      const equipoFull = await res.json();
 
-    const res = await fetch(`/api/equipos/${equipoId}`);
-    if (!res.ok) return;
-    const equipoFull = await res.json();
+      const payload = {
+        equipoId,
+        plantillaId,
+        logo: "/logo gestek.png",
+        equipo: {
+          nombre: equipoFull.nombre,
+          id_cliente: equipoFull.id_cliente,
+          tipo: equipoFull.tipo,
+          marca: equipoFull.marca,
+          modelo: equipoFull.modelo,
+          serie: equipoFull.serie,
+          accesorios: equipoFull.accesorios,
+          ubicacion: equipoFull.ubicacion,
+          fecha_proximo_mantenimiento: proximoMantenimiento || equipoFull.fecha_proximo_mantenimiento,
+          fecha_proxima_calibracion: proximaCalibracion || equipoFull.fecha_proxima_calibracion,
+        },
+        proximo_mantenimiento: proximoMantenimiento,
+        proxima_calibracion: proximaCalibracion,
+        cliente: {
+          nombre: equipoFull.cliente?.nombre || "",
+          nit: equipoFull.cliente?.nit,
+          direccion: equipoFull.cliente?.direccion,
+          ciudad: equipoFull.cliente?.ciudad,
+          email: equipoFull.cliente?.email || "",
+          logo_url: equipoFull.cliente?.logo_url || "",
+        },
+        sede: equipoFull.sede
+          ? {
+              nombre: equipoFull.sede.nombre || "",
+              ciudad: equipoFull.sede.ciudad || null,
+              direccion: equipoFull.sede.direccion || null,
+            }
+          : null,
+        mantenimiento: {
+          tipo,
+          fecha: fecha || new Date().toLocaleDateString("es-ES"),
+          orden_servicio: ordenServicio || undefined,
+          numero_informe: numeroInforme || undefined,
+          observaciones,
+          conclusion,
+          tecnico_nombre: profesional || "Técnico",
+          aprobador_nombre: aprobador || undefined,
+          checklist: Object.values(checkResults).map((cr) => {
+            const item = selectedPlantilla?.items.find((i) => i.id === cr.itemId);
+            return {
+              nombre: item?.nombre || "",
+              categoria: item?.categoria || "",
+              resultado: cr.resultado,
+              observacion: cr.observacion,
+            };
+          }),
+          fotos: photos,
+          firma_tecnico: firmaTecnico || undefined,
+          firma_aprobador: firmaAprobador || undefined,
+          firma_recibe: firmaRecibe || undefined,
+        },
+      };
 
-    const payload = {
-      equipoId,
-      plantillaId,
-      logo: "/logo gestek.png",
-      equipo: {
-        nombre: equipoFull.nombre,
-        id_cliente: equipoFull.id_cliente,
-        tipo: equipoFull.tipo,
-        marca: equipoFull.marca,
-        modelo: equipoFull.modelo,
-        serie: equipoFull.serie,
-        accesorios: equipoFull.accesorios,
-        ubicacion: equipoFull.ubicacion,
-      },
-      cliente: {
-        nombre: equipoFull.cliente?.nombre || "",
-        nit: equipoFull.cliente?.nit,
-        direccion: equipoFull.cliente?.direccion,
-        ciudad: equipoFull.cliente?.ciudad,
-        email: equipoFull.cliente?.email || "",
-        logo_url: equipoFull.cliente?.logo_url || "",
-      },
-      mantenimiento: {
-        tipo,
-        fecha: fecha || new Date().toLocaleDateString("es-ES"),
-        orden_servicio: ordenServicio || undefined,
-        numero_informe: numeroInforme || undefined,
-        observaciones,
-        conclusion,
-        tecnico_nombre: profesional || "Técnico",
-        aprobador_nombre: aprobador || undefined,
-        checklist: Object.values(checkResults).map((cr) => {
-          const item = selectedPlantilla?.items.find((i) => i.id === cr.itemId);
-          return {
-            nombre: item?.nombre || "",
-            categoria: item?.categoria || "",
-            resultado: cr.resultado,
-            observacion: cr.observacion,
-          };
-        }),
-        fotos: photos,
-        firma_tecnico: firmaTecnico || undefined,
-        firma_aprobador: firmaAprobador || undefined,
-        firma_recibe: firmaRecibe || undefined,
-      },
-    };
+      const pdfRes = await fetch("/api/informes/generar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const pdfRes = await fetch("/api/informes/generar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      if (!pdfRes.ok) {
+        const err = await pdfRes.json().catch(() => ({ error: "Error al generar el informe" }));
+        setUploadError(err.error || "Error al generar el informe");
+        setGenerando(false);
+        return;
+      }
 
-    if (!pdfRes.ok) { setGenerando(false); return; }
+      const mantenimientoId = pdfRes.headers.get("X-Mantenimiento-Id");
 
-    const mantenimientoId = pdfRes.headers.get("X-Mantenimiento-Id");
+      if (descargar) {
+        const blob = await pdfRes.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `informe-${(payload.equipo.nombre || "equipo").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
 
-    if (descargar) {
-      const blob = await pdfRes.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `informe-${payload.equipo.nombre.replace(/\s+/g, "-").toLowerCase()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    if (mantenimientoId) {
-      window.location.href = `/informes/${mantenimientoId}`;
-    } else {
-      setSuccess(true);
+      if (mantenimientoId) {
+        window.location.href = `/informes/${mantenimientoId}`;
+      } else {
+        setSuccess(true);
+      }
+    } catch (err) {
+      console.error("Error generando informe:", err);
+      setUploadError("Error inesperado al generar el informe");
+      setGenerando(false);
     }
   };
 
@@ -423,6 +455,27 @@ export default function NuevoInformePage() {
                     defaultValue={profile?.nombre || ""}
                     className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                     placeholder="Nombre del técnico o profesional"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-600">Próximo mantenimiento</label>
+                  <input
+                    type="date"
+                    name="proximo_mantenimiento"
+                    defaultValue={selectedEquipo?.fecha_proximo_mantenimiento || ""}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-600">Próxima calibración</label>
+                  <input
+                    type="date"
+                    name="proxima_calibracion"
+                    defaultValue={selectedEquipo?.fecha_proxima_calibracion || ""}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   />
                 </div>
               </div>

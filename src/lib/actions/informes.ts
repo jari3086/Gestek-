@@ -38,6 +38,8 @@ export async function actualizarInforme(
     firma_tecnico?: string;
     firma_aprobador?: string;
     firma_recibe?: string;
+    proximo_mantenimiento?: string;
+    proxima_calibracion?: string;
     checklist?: { nombre: string; categoria: string; resultado: string; observacion: string }[];
     fotos_nuevas?: string[];
     fotos_eliminar?: string[];
@@ -68,6 +70,22 @@ export async function actualizarInforme(
     .eq("id", mantenimientoId);
 
   if (error) return { error: error.message };
+
+  // Actualizar fechas de próximo mantenimiento/calibración en el equipo
+  if (data.proximo_mantenimiento !== undefined || data.proxima_calibracion !== undefined) {
+    const { data: mant } = await supabase
+      .from("mantenimientos")
+      .select("equipo_id")
+      .eq("id", mantenimientoId)
+      .single();
+
+    if (mant?.equipo_id) {
+      const eqUpdates: Record<string, string> = {};
+      if (data.proximo_mantenimiento !== undefined) eqUpdates.fecha_proximo_mantenimiento = data.proximo_mantenimiento;
+      if (data.proxima_calibracion !== undefined) eqUpdates.fecha_proxima_calibracion = data.proxima_calibracion;
+      await supabase.from("equipos").update(eqUpdates).eq("id", mant.equipo_id);
+    }
+  }
 
   // Update checklist
   if (data.checklist !== undefined) {
@@ -119,7 +137,7 @@ export async function actualizarInforme(
   try {
     const { data: mant } = await supabase
       .from("mantenimientos")
-      .select("*, equipo:equipo_id(*, cliente:cliente_id(*))")
+      .select("*, equipo:equipo_id(*, cliente:cliente_id(*), sede:sede_id(*))")
       .eq("id", mantenimientoId)
       .single();
 
@@ -127,6 +145,7 @@ export async function actualizarInforme(
 
     const equipo = mant.equipo as any;
     const cliente = equipo?.cliente as any;
+    const sede = (equipo as any)?.sede || (cliente as any)?.sede;
 
     const { data: checklistResult } = await supabase
       .from("checklist_resultados")
@@ -146,6 +165,7 @@ export async function actualizarInforme(
     const pdfBuffer = await generatePdfBuffer({
       equipo,
       cliente,
+      sede,
       mantenimiento: {
         tipo: mant.tipo,
         fecha: mant.fecha,

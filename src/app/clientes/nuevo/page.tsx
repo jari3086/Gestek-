@@ -112,14 +112,15 @@ export default function NuevoClientePage() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-600">Régimen</label>
-              <select
-                name="regimen"
-                defaultValue="comun"
-                className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-              >
-                <option value="comun">Común</option>
-                <option value="simplificado">Simplificado</option>
-              </select>
+                <select
+                  name="regimen"
+                  defaultValue="ordinario"
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="ordinario">Régimen ordinario</option>
+                  <option value="simple">Régimen simple de tributación</option>
+                  <option value="especial">Régimen especial</option>
+                </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-600">Tipo persona</label>

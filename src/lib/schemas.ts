@@ -11,6 +11,7 @@ export const equipoSchema = z.object({
   accesorios: z.string().max(500).optional().default(""),
   ubicacion: z.string().min(1, "Ubicación requerida").max(300),
   cliente_id: z.string().uuid("Cliente inválido").min(1),
+  sede_id: z.string().uuid("Sede inválida").optional().default(""),
   fecha_ultimo_mantenimiento: z.string().optional().default(""),
   fecha_proximo_mantenimiento: z.string().optional().default(""),
   fecha_ultima_calibracion: z.string().optional().default(""),
@@ -46,8 +47,9 @@ export const clienteSchema = z.object({
   nit: z.string().max(50).optional().default(""),
   direccion: z.string().max(300).optional().default(""),
   ciudad: z.string().max(100).optional().default(""),
-  regimen: z.enum(["comun", "simplificado"]).optional().default("comun"),
+  regimen: z.enum(["ordinario", "simple", "especial"]).optional().default("ordinario"),
   tipo_persona: z.enum(["natural", "juridica"]).optional().default("juridica"),
+  logo_url: z.string().optional().default(""),
   departamento: z.string().max(100).optional().default(""),
   codigo_postal: z.string().max(20).optional().default(""),
 });

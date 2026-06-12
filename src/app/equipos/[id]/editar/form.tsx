@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { actualizarEquipo } from "@/lib/actions/equipos";
 
 function autoCalcProximo() {
@@ -17,11 +17,16 @@ function autoCalcProximo() {
 export function EditarEquipoForm({
   equipo,
   clientes,
+  sedes,
 }: {
   equipo: any;
   clientes: { id: string; nombre: string }[];
+  sedes: { id: string; cliente_id: string; nombre: string }[];
 }) {
   const [state, formAction, pending] = useActionState(actualizarEquipo, undefined);
+  const [clienteId, setClienteId] = useState(equipo.cliente_id || "");
+
+  const sedesFiltradas = sedes.filter((s) => s.cliente_id === clienteId);
 
   return (
     <form action={formAction} className="space-y-5 rounded-xl bg-white p-6 shadow-card">
@@ -37,7 +42,8 @@ export function EditarEquipoForm({
           <select
             name="cliente_id"
             required
-            defaultValue={equipo.cliente_id}
+            value={clienteId}
+            onChange={(e) => setClienteId(e.target.value)}
             className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           >
             <option value="">Seleccionar</option>
@@ -48,6 +54,24 @@ export function EditarEquipoForm({
             ))}
           </select>
         </div>
+
+        {clienteId && sedesFiltradas.length > 0 && (
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-600">Sede / Sucursal</label>
+            <select
+              name="sede_id"
+              defaultValue={equipo.sede_id || ""}
+              className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+            >
+              <option value="">Sin sede</option>
+              {sedesFiltradas.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="sm:col-span-2">
           <label className="mb-1 block text-sm font-medium text-zinc-600">

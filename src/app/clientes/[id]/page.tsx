@@ -34,6 +34,12 @@ export default async function ClienteDetallePage({
     .select("*", { count: "exact", head: true })
     .eq("cliente_id", id);
 
+  const { data: sedes } = await supabase
+    .from("sedes")
+    .select("id, nombre")
+    .eq("cliente_id", id)
+    .order("nombre");
+
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       <header className="border-b border-zinc-200/60 bg-white shadow-soft">
@@ -52,7 +58,7 @@ export default async function ClienteDetallePage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-brand-secondary">{cliente.nombre}</h2>
           <p className="text-zinc-500">{cliente.email}</p>
@@ -90,6 +96,38 @@ export default async function ClienteDetallePage({
               Ver sus equipos &rarr;
             </Link>
           </div>
+        </div>
+
+        {/* Sedes */}
+        <div className="mt-8 rounded-xl bg-white p-5 shadow-card">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+              Sedes / Sucursales
+            </h3>
+            <Link
+              href={`/clientes/${cliente.id}/sedes/nueva`}
+              className="rounded-lg bg-brand-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-primary/90"
+            >
+              + Nueva sede
+            </Link>
+          </div>
+
+          {(!sedes || sedes.length === 0) ? (
+            <p className="text-sm text-zinc-400">Este cliente no tiene sedes registradas.</p>
+          ) : (
+            <div className="space-y-2">
+              {sedes.map((sede) => (
+                <Link
+                  key={sede.id}
+                  href={`/clientes/${cliente.id}/sedes`}
+                  className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-3 text-sm hover:bg-zinc-50"
+                >
+                  <span className="font-medium text-brand-secondary">{sede.nombre}</span>
+                  <span className="text-brand-primary text-xs">Ver equipos &rarr;</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

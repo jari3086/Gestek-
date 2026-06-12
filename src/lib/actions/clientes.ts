@@ -19,17 +19,20 @@ export async function crearCliente(prevState: ClienteState, formData: FormData) 
   const supabase = await createClient();
   if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
 
+  const raw = (name: string) => (formData.get(name) as string) || "";
+
   const parsed = clienteSchema.safeParse({
-    nombre: formData.get("nombre") as string,
-    email: formData.get("email") as string,
-    telefono: formData.get("telefono") as string,
-    nit: formData.get("nit") as string,
-    direccion: formData.get("direccion") as string,
-    ciudad: formData.get("ciudad") as string,
-    regimen: formData.get("regimen") as string,
-    tipo_persona: formData.get("tipo_persona") as string,
-    departamento: formData.get("departamento") as string,
-    codigo_postal: formData.get("codigo_postal") as string,
+    nombre: raw("nombre"),
+    email: raw("email"),
+    telefono: raw("telefono"),
+    nit: raw("nit"),
+    direccion: raw("direccion"),
+    ciudad: raw("ciudad"),
+    regimen: raw("regimen"),
+    tipo_persona: raw("tipo_persona"),
+    logo_url: raw("logo_url"),
+    departamento: raw("departamento"),
+    codigo_postal: raw("codigo_postal"),
   });
 
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Datos inválidos" };
@@ -59,6 +62,7 @@ export async function crearCliente(prevState: ClienteState, formData: FormData) 
     telefono: parsed.data.telefono || null,
     regimen: parsed.data.regimen || null,
     tipo_persona: parsed.data.tipo_persona || null,
+    logo_url: parsed.data.logo_url || null,
     departamento: parsed.data.departamento || null,
     codigo_postal: parsed.data.codigo_postal || null,
   });
@@ -76,17 +80,20 @@ export async function actualizarCliente(prevState: ClienteState, formData: FormD
   const id = formData.get("id") as string;
   if (!id) return { error: "ID requerido" };
 
+  const raw = (name: string) => (formData.get(name) as string) || "";
+
   const parsed = clienteSchema.safeParse({
-    nombre: formData.get("nombre") as string,
-    email: formData.get("email") as string,
-    telefono: formData.get("telefono") as string,
-    nit: formData.get("nit") as string,
-    direccion: formData.get("direccion") as string,
-    ciudad: formData.get("ciudad") as string,
-    regimen: formData.get("regimen") as string,
-    tipo_persona: formData.get("tipo_persona") as string,
-    departamento: formData.get("departamento") as string,
-    codigo_postal: formData.get("codigo_postal") as string,
+    nombre: raw("nombre"),
+    email: raw("email"),
+    telefono: raw("telefono"),
+    nit: raw("nit"),
+    direccion: raw("direccion"),
+    ciudad: raw("ciudad"),
+    regimen: raw("regimen"),
+    tipo_persona: raw("tipo_persona"),
+    logo_url: raw("logo_url"),
+    departamento: raw("departamento"),
+    codigo_postal: raw("codigo_postal"),
   });
 
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Datos inválidos" };
@@ -102,6 +109,7 @@ export async function actualizarCliente(prevState: ClienteState, formData: FormD
       telefono: parsed.data.telefono || null,
       regimen: parsed.data.regimen || null,
       tipo_persona: parsed.data.tipo_persona || null,
+      logo_url: parsed.data.logo_url || null,
       departamento: parsed.data.departamento || null,
       codigo_postal: parsed.data.codigo_postal || null,
     })

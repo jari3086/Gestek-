@@ -167,7 +167,7 @@ describe("clienteSchema", () => {
     const result = clienteSchema.safeParse(validCliente);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.regimen).toBe("comun");
+      expect(result.data.regimen).toBe("ordinario");
       expect(result.data.tipo_persona).toBe("juridica");
     }
   });
@@ -194,7 +194,7 @@ describe("clienteSchema", () => {
       nit: "900123456-7",
       direccion: "Carrera 45 # 23-15",
       ciudad: "Bogotá",
-      regimen: "simplificado",
+      regimen: "simple",
       tipo_persona: "natural",
       departamento: "Cundinamarca",
       codigo_postal: "110111",

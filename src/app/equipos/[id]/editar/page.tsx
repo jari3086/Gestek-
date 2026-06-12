@@ -37,6 +37,11 @@ export default async function EditarEquipoPage({
     .eq("role", "cliente")
     .order("nombre");
 
+  const { data: sedes } = await supabase
+    .from("sedes")
+    .select("id, cliente_id, nombre")
+    .order("nombre");
+
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       <header className="border-b border-zinc-200/60 bg-white shadow-soft">
@@ -54,7 +59,7 @@ export default async function EditarEquipoPage({
         <h2 className="mb-6 text-xl font-bold text-brand-secondary">
           Editar equipo
         </h2>
-        <EditarEquipoForm equipo={equipo} clientes={clientes ?? []} />
+        <EditarEquipoForm equipo={equipo} clientes={clientes ?? []} sedes={sedes ?? []} />
       </main>
     </div>
   );

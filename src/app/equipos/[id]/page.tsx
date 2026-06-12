@@ -28,7 +28,7 @@ export default async function EquipoDetallePage({
 
   const { data: equipo } = await supabase
     .from("equipos")
-    .select("*, cliente:cliente_id(*)")
+    .select("*, cliente:cliente_id(*), sede:sede_id(*)")
     .eq("id", id)
     .single();
 
@@ -36,6 +36,7 @@ export default async function EquipoDetallePage({
   if (!esAdmin && equipo.cliente_id !== user.id) redirect("/equipos");
 
   const cliente = equipo.cliente as any;
+  const sede = equipo.sede as any;
 
   const { data: mantenimientos } = await supabase
     .from("mantenimientos")
@@ -95,8 +96,9 @@ export default async function EquipoDetallePage({
             <dl className="space-y-3">
               <Item label="Nombre" value={cliente?.nombre} />
               <Item label="NIT" value={cliente?.nit} />
-              <Item label="Dirección" value={cliente?.direccion} />
-              <Item label="Ciudad" value={cliente?.ciudad} />
+              {sede && <Item label="Sede" value={sede?.nombre} />}
+              <Item label="Dirección" value={sede?.direccion || cliente?.direccion} />
+              <Item label="Ciudad" value={sede?.ciudad || cliente?.ciudad} />
               <Item label="Correo" value={cliente?.email} />
               <Item label="Teléfono" value={cliente?.telefono} />
             </dl>

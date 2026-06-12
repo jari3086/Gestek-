@@ -35,6 +35,8 @@ export function EditarInformeForm({
   firma_tecnico,
   firma_aprobador,
   firma_recibe,
+  proximo_mantenimiento,
+  proxima_calibracion,
   checklist: initialChecklist,
   fotos: initialFotos,
   equipoNombre,
@@ -51,6 +53,8 @@ export function EditarInformeForm({
   firma_tecnico?: string;
   firma_aprobador?: string;
   firma_recibe?: string;
+  proximo_mantenimiento?: string;
+  proxima_calibracion?: string;
   checklist?: CheckItem[];
   fotos?: string[];
   equipoNombre?: string;
@@ -86,6 +90,8 @@ export function EditarInformeForm({
         firma_tecnico: formData.get("firma_tecnico") as string,
         firma_aprobador: formData.get("firma_aprobador") as string,
         firma_recibe: formData.get("firma_recibe") as string,
+        proximo_mantenimiento: formData.get("proximo_mantenimiento") as string,
+        proxima_calibracion: formData.get("proxima_calibracion") as string,
         checklist: checklist.length > 0 ? checklist : undefined,
         fotos_nuevas: fotos_nuevas.length > 0 ? fotos_nuevas : undefined,
         fotos_eliminar: fotos_eliminar.length > 0 ? fotos_eliminar : undefined,
@@ -231,6 +237,26 @@ export function EditarInformeForm({
             <input
               name="aprobador_nombre"
               defaultValue={aprobador_nombre}
+              className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            />
+          </div>
+        </div>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-600">Próximo mantenimiento</label>
+            <input
+              type="date"
+              name="proximo_mantenimiento"
+              defaultValue={proximo_mantenimiento}
+              className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-600">Próxima calibración</label>
+            <input
+              type="date"
+              name="proxima_calibracion"
+              defaultValue={proxima_calibracion}
               className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
             />
           </div>

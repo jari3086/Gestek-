@@ -24,6 +24,11 @@ export default async function NuevoEquipoPage() {
     .eq("role", "cliente")
     .order("nombre");
 
+  const { data: sedes } = await supabase
+    .from("sedes")
+    .select("id, cliente_id, nombre")
+    .order("nombre");
+
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       <header className="border-b border-zinc-200/60 bg-white shadow-soft">
@@ -36,7 +41,7 @@ export default async function NuevoEquipoPage() {
 
       <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
         <h2 className="mb-6 text-xl font-bold text-brand-secondary">Nuevo equipo</h2>
-        <EquipoForm clientes={clientes ?? []} />
+        <EquipoForm clientes={clientes ?? []} sedes={sedes ?? []} />
       </main>
     </div>
   );

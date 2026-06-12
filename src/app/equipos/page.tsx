@@ -9,11 +9,13 @@ import { AppHeader } from "@/components/AppHeader";
 export default function EquiposPage() {
   const [equipos, setEquipos] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
+  const [sedes, setSedes] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Filters
   const [filtroCliente, setFiltroCliente] = useState("");
+  const [filtroSede, setFiltroSede] = useState("");
   const [filtroEquipo, setFiltroEquipo] = useState("");
   const [filtroModelo, setFiltroModelo] = useState("");
   const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
@@ -22,22 +24,36 @@ export default function EquiposPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const clienteId = params.get("cliente_id") || "";
+    const sedeId = params.get("sede_id") || "";
     if (clienteId) setFiltroCliente(clienteId);
+    if (sedeId) setFiltroSede(sedeId);
 
-    const url = clienteId ? `/api/equipos?cliente_id=${clienteId}` : "/api/equipos";
+    const searchParams = new URLSearchParams();
+    if (clienteId) searchParams.set("cliente_id", clienteId);
+    if (sedeId) searchParams.set("sede_id", sedeId);
+    const qs = searchParams.toString();
+    const url = qs ? `/api/equipos?${qs}` : "/api/equipos";
     Promise.all([
       fetch("/api/perfil").then(r => r.json()),
       fetch(url).then(r => r.json()),
       fetch("/api/clientes").then(r => r.json()),
-    ]).then(([perfil, equiposData, clientesData]) => {
+      fetch("/api/sedes").then(r => r.json()),
+    ]).then(([perfil, equiposData, clientesData, sedesData]) => {
       setProfile(perfil);
       setEquipos(Array.isArray(equiposData) ? equiposData : []);
       setClientes(Array.isArray(clientesData) ? clientesData : []);
+      setSedes(Array.isArray(sedesData) ? sedesData : []);
+      // Para clientes: setear filtroCliente con su propio ID para que funcione el filtro de sede
+      if (perfil?.role === "cliente" && !clienteId) {
+        setFiltroCliente(perfil.id);
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
   const esAdmin = profile?.role === "administrador";
+
+  const sedesFiltradas = sedes.filter((s: any) => s.cliente_id === filtroCliente);
 
   useEffect(() => {
     if (profile?.role === "tecnico") {
@@ -48,17 +64,18 @@ export default function EquiposPage() {
   const filtrados = useMemo(() => {
     return equipos.filter((eq) => {
       if (filtroCliente && eq.cliente_id !== filtroCliente) return false;
+      if (filtroSede && eq.sede_id !== filtroSede) return false;
       if (filtroEquipo && !eq.nombre.toLowerCase().includes(filtroEquipo.toLowerCase())) return false;
       if (filtroModelo && !(eq.modelo || "").toLowerCase().includes(filtroModelo.toLowerCase())) return false;
-      if (filtroFechaInicio && eq.fecha_proximo_mantenimiento) {
-        if (new Date(eq.fecha_proximo_mantenimiento) < new Date(filtroFechaInicio)) return false;
+      if (filtroFechaInicio && eq.ultimo_informe_fecha) {
+        if (new Date(eq.ultimo_informe_fecha) < new Date(filtroFechaInicio)) return false;
       }
-      if (filtroFechaFin && eq.fecha_proximo_mantenimiento) {
-        if (new Date(eq.fecha_proximo_mantenimiento) > new Date(filtroFechaFin)) return false;
+      if (filtroFechaFin && eq.ultimo_informe_fecha) {
+        if (new Date(eq.ultimo_informe_fecha) > new Date(filtroFechaFin)) return false;
       }
       return true;
     });
-  }, [equipos, filtroCliente, filtroEquipo, filtroModelo, filtroFechaInicio, filtroFechaFin]);
+  }, [equipos, filtroCliente, filtroSede, filtroEquipo, filtroModelo, filtroFechaInicio, filtroFechaFin]);
 
   if (loading) return (
     <div className="min-h-screen bg-[#f5f7fa] flex items-center justify-center">
@@ -111,10 +128,22 @@ export default function EquiposPage() {
 
         {/* Filtros */}
         <div className="mb-6 flex flex-wrap gap-3">
+          {filtroCliente && sedesFiltradas.length > 0 && (
+            <select
+              value={filtroSede}
+              onChange={(e) => setFiltroSede(e.target.value)}
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
+            >
+              <option value="">Todas las sedes</option>
+              {sedesFiltradas.map((s: any) => (
+                <option key={s.id} value={s.id}>{s.nombre}</option>
+              ))}
+            </select>
+          )}
           {esAdmin && (
             <select
               value={filtroCliente}
-              onChange={(e) => setFiltroCliente(e.target.value)}
+              onChange={(e) => { setFiltroCliente(e.target.value); setFiltroSede(""); }}
               className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
             >
               <option value="">Todos los clientes</option>
@@ -140,14 +169,14 @@ export default function EquiposPage() {
             value={filtroFechaInicio}
             onChange={(e) => setFiltroFechaInicio(e.target.value)}
             className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
-            title="Próximo mantenimiento desde"
+            title="Último informe desde"
           />
           <input
             type="date"
             value={filtroFechaFin}
             onChange={(e) => setFiltroFechaFin(e.target.value)}
             className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
-            title="Próximo mantenimiento hasta"
+            title="Último informe hasta"
           />
         </div>
 
@@ -164,8 +193,9 @@ export default function EquiposPage() {
                   <th className="px-5 py-3 font-medium">Marca</th>
                   <th className="px-5 py-3 font-medium">Modelo</th>
                   <th className="px-5 py-3 font-medium">Serie</th>
-                  {esAdmin && <th className="px-5 py-3 font-medium">Cliente</th>}
-                  <th className="px-5 py-3 font-medium">Próximo mant.</th>
+                    {esAdmin && <th className="px-5 py-3 font-medium">Cliente</th>}
+                    {filtroCliente && sedesFiltradas.length > 0 && <th className="px-5 py-3 font-medium">Sede</th>}
+                    <th className="px-5 py-3 font-medium">Próximo mant.</th>
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
               </thead>
@@ -190,6 +220,11 @@ export default function EquiposPage() {
                         {(eq.cliente as any)?.ciudad && (
                           <div className="text-xs text-zinc-400">{(eq.cliente as any)?.ciudad}</div>
                         )}
+                      </td>
+                    )}
+                    {filtroCliente && sedesFiltradas.length > 0 && (
+                      <td className="px-5 py-4 text-zinc-600">
+                        {(eq.sede as any)?.nombre || "—"}
                       </td>
                     )}
                     <td className="px-5 py-4">

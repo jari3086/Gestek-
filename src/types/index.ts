@@ -17,6 +17,18 @@ export interface Profile {
   created_at: string;
 }
 
+export interface Sede {
+  id: string;
+  cliente_id: string;
+  nombre: string;
+  direccion?: string;
+  ciudad?: string;
+  departamento?: string;
+  telefono?: string;
+  email?: string;
+  created_at: string;
+}
+
 export interface Equipo {
   id: string;
   nombre: string;
@@ -27,6 +39,7 @@ export interface Equipo {
   accesorios?: string;
   ubicacion: string;
   cliente_id: string;
+  sede_id?: string;
   creado_por: string;
   fecha_ultimo_mantenimiento?: string;
   fecha_proximo_mantenimiento?: string;
@@ -87,6 +100,11 @@ export type Database = {
         Row: Profile;
         Insert: Omit<Profile, "created_at">;
         Update: Partial<Omit<Profile, "id">>;
+      };
+      sedes: {
+        Row: Sede;
+        Insert: Omit<Sede, "id" | "created_at">;
+        Update: Partial<Omit<Sede, "id">>;
       };
       equipos: {
         Row: Equipo;
