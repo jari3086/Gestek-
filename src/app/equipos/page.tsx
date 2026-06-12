@@ -185,7 +185,7 @@ export default function EquiposPage() {
             <p className="text-zinc-400">No se encontraron equipos con los filtros actuales</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-zinc-200/60 bg-white shadow-card">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200/60 bg-white shadow-card">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-100 bg-zinc-50/50 text-left text-sm text-zinc-500">

@@ -41,6 +41,9 @@ export default function NuevoInformePage() {
   const [selectedCliente, setSelectedCliente] = useState<any>(null);
   const [equipos, setEquipos] = useState<any[]>([]);
   const [selectedEquipo, setSelectedEquipo] = useState<any>(null);
+  const [sedes, setSedes] = useState<any[]>([]);
+  const [selectedSede, setSelectedSede] = useState<any>(null);
+  const [loadingSedes, setLoadingSedes] = useState(false);
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [plantillaId, setPlantillaId] = useState("");
   const [selectedPlantilla, setSelectedPlantilla] = useState<Plantilla | null>(null);
@@ -74,14 +77,36 @@ export default function NuevoInformePage() {
     const id = e.target.value;
     const cl = clientes.find((c: any) => c.id === id);
     setSelectedCliente(cl || null);
+    setSelectedSede(null);
     setSelectedEquipo(null);
+    setSedes([]);
     setEquipos([]);
 
     if (!id) return;
 
+    setLoadingSedes(true);
+    try {
+      const res = await fetch(`/api/sedes?cliente_id=${id}`);
+      const data = await res.json();
+      setSedes(Array.isArray(data) ? data : []);
+    } catch {
+      setSedes([]);
+    }
+    setLoadingSedes(false);
+  };
+
+  const handleSedeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const sd = sedes.find((s: any) => s.id === id);
+    setSelectedSede(sd || null);
+    setSelectedEquipo(null);
+    setEquipos([]);
+
+    if (!id || !selectedCliente) return;
+
     setLoadingEquipos(true);
     try {
-      const res = await fetch(`/api/equipos?cliente_id=${id}`);
+      const res = await fetch(`/api/equipos?cliente_id=${selectedCliente.id}&sede_id=${id}`);
       const data = await res.json();
       setEquipos(Array.isArray(data) ? data : []);
     } catch {
@@ -369,10 +394,39 @@ export default function NuevoInformePage() {
             )}
           </div>
 
-          {/* Step 2: Datos del equipo */}
+          {/* Step 2: Sede */}
           {selectedCliente && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">2. Datos del equipo</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">2. Sede</h3>
+              <select
+                value={selectedSede?.id || ""}
+                onChange={handleSedeChange}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              >
+                <option value="">Seleccionar sede...</option>
+                {loadingSedes ? (
+                  <option disabled>Cargando sedes...</option>
+                ) : sedes.length === 0 ? (
+                  <option disabled>No hay sedes para este cliente</option>
+                ) : sedes.map((sd: any) => (
+                  <option key={sd.id} value={sd.id}>
+                    {sd.nombre}{sd.ciudad ? ` (${sd.ciudad})` : ""}
+                  </option>
+                ))}
+              </select>
+              {selectedSede && (
+                <div className="mt-3 rounded-lg bg-[#f8fafc] p-4 text-sm">
+                  <p className="font-medium text-brand-secondary">{selectedSede.nombre}</p>
+                  <p className="mt-1 text-zinc-500">{selectedSede.direccion || "—"} · {selectedSede.ciudad || "—"}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Datos del equipo */}
+          {selectedSede && (
+            <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
+              <h3 className="mb-4 font-semibold text-brand-secondary">3. Datos del equipo</h3>
               <select
                 name="equipo_id"
                 required
@@ -401,10 +455,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 3: Datos del servicio */}
+          {/* Step 4: Datos del servicio */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">3. Datos del servicio</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">4. Datos del servicio</h3>
 
               <div className="mb-4">
                 <label className="mb-1.5 block text-sm font-medium text-zinc-600">Tipo de servicio *</label>
@@ -482,10 +536,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 4: Observaciones iniciales */}
+          {/* Step 5: Observaciones iniciales */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">4. Observaciones iniciales</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">5. Observaciones iniciales</h3>
               <textarea
                 name="observaciones"
                 rows={4}
@@ -495,10 +549,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 5: Lista de chequeo */}
+          {/* Step 6: Lista de chequeo */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">5. Lista de chequeo</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">6. Lista de chequeo</h3>
 
               <select
                 value={plantillaId}
@@ -575,10 +629,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 6: Conclusiones */}
+          {/* Step 7: Conclusiones */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">6. Conclusiones</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">7. Conclusiones</h3>
               <textarea
                 name="conclusion"
                 rows={3}
@@ -588,10 +642,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 7: Anexo fotográfico */}
+          {/* Step 8: Anexo fotográfico */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">7. Anexo fotográfico</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">8. Anexo fotográfico</h3>
 
               <div className="mb-4 flex flex-wrap gap-3">
                 {photos.map((url) => (
@@ -637,10 +691,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 8: Firmas */}
+          {/* Step 9: Firmas */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">8. Firmas</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">9. Firmas</h3>
 
               <div className="mb-4">
                 <label className="mb-1.5 block text-sm font-medium text-zinc-600">Profesional que aprueba</label>
@@ -659,7 +713,7 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 9: Vista previa */}
+          {/* Step 10: Vista previa */}
           {selectedEquipo && !preview && (
             <div className="flex justify-center">
               <button
@@ -688,7 +742,7 @@ export default function NuevoInformePage() {
 
           {selectedEquipo && preview && previewData && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">9. Vista previa del informe</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">10. Vista previa del informe</h3>
               <p className="mb-4 text-xs text-zinc-400">Revisa los datos antes de generar el informe. Puedes volver arriba para editar cualquier sección.</p>
 
               <div className="mb-4 grid gap-4 sm:grid-cols-2">
