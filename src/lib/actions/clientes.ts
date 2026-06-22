@@ -5,19 +5,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteSchema } from "@/lib/schemas";
+import { isAdmin } from "@/lib/auth/check-admin";
 
 export type ClienteState = { error?: string } | undefined;
 
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  return profile?.role === "administrador";
-}
-
 export async function crearCliente(prevState: ClienteState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const raw = (name: string) => (formData.get(name) as string) || "";
 
@@ -75,7 +69,7 @@ export async function crearCliente(prevState: ClienteState, formData: FormData) 
 
 export async function actualizarCliente(prevState: ClienteState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const id = formData.get("id") as string;
   if (!id) return { error: "ID requerido" };
@@ -123,11 +117,12 @@ export async function actualizarCliente(prevState: ClienteState, formData: FormD
 
 export async function crearTecnico(prevState: ClienteState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const email = formData.get("email") as string;
   const nombre = formData.get("nombre") as string;
   const password = formData.get("password") as string;
+  const firma_url = formData.get("firma_url") as string;
 
   if (!email || !email.includes("@")) return { error: "Email inválido" };
   if (!nombre || nombre.length < 1) return { error: "Nombre requerido" };
@@ -144,12 +139,15 @@ export async function crearTecnico(prevState: ClienteState, formData: FormData) 
 
   if (authError) return { error: authError.message };
 
-  const { error: profileError } = await admin.from("profiles").upsert({
+  const profileData: Record<string, string> = {
     id: authData.user.id,
     nombre,
     email,
     role: "tecnico",
-  });
+  };
+  if (firma_url) profileData.firma_url = firma_url;
+
+  const { error: profileError } = await admin.from("profiles").upsert(profileData);
 
   if (profileError) return { error: profileError.message };
 
@@ -159,7 +157,7 @@ export async function crearTecnico(prevState: ClienteState, formData: FormData) 
 
 export async function eliminarCliente(id: string) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) throw new Error("No autorizado");
+  if (!(await isAdmin(supabase))) throw new Error("No autorizado");
 
   const admin = createAdminClient();
 
@@ -204,9 +202,52 @@ export async function eliminarCliente(id: string) {
   revalidatePath("/clientes");
 }
 
+export async function actualizarPerfil(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const firma_url = formData.get("firma_url") as string;
+  const nombre = formData.get("nombre") as string;
+
+  const updates: Record<string, string> = {};
+  if (firma_url) updates.firma_url = firma_url;
+  if (nombre) updates.nombre = nombre;
+
+  if (Object.keys(updates).length === 0) return { error: "Sin cambios" };
+
+  const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/perfil");
+  return { success: true };
+}
+
+export async function actualizarTecnico(formData: FormData) {
+  const supabase = await createClient();
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
+
+  const id = formData.get("id") as string;
+  const nombre = formData.get("nombre") as string;
+  const firma_url = formData.get("firma_url") as string;
+
+  if (!id) return { error: "ID requerido" };
+
+  const updates: Record<string, string> = {};
+  if (nombre) updates.nombre = nombre;
+  if (firma_url) updates.firma_url = firma_url;
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update(updates).eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/empleados");
+  return { success: true };
+}
+
 export async function eliminarTecnico(id: string) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) throw new Error("No autorizado");
+  if (!(await isAdmin(supabase))) throw new Error("No autorizado");
 
   const admin = createAdminClient();
 

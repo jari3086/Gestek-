@@ -102,7 +102,7 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
   const equipoSeleccionado = searchParams?.equipo_id || "";
 
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard", label: "Inicio" },
     ...(esAdmin || esTecnico ? [{ href: "/informes/nuevo", label: "+ Nuevo informe", highlight: true as const }] : []),
   ];
 

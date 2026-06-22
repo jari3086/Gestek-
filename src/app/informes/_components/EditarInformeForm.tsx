@@ -40,6 +40,8 @@ export function EditarInformeForm({
   checklist: initialChecklist,
   fotos: initialFotos,
   equipoNombre,
+  tecnicoFirmaUrl,
+  tecnicoNombre,
 }: {
   id: string;
   tipo: string;
@@ -58,6 +60,8 @@ export function EditarInformeForm({
   checklist?: CheckItem[];
   fotos?: string[];
   equipoNombre?: string;
+  tecnicoFirmaUrl?: string;
+  tecnicoNombre?: string;
 }) {
   const [success, setSuccess] = useState(false);
   const [checklist, setChecklist] = useState<CheckItem[]>(initialChecklist || []);
@@ -172,9 +176,8 @@ export function EditarInformeForm({
 
   return (
     <form action={action} className="space-y-4">
-      {/* Hidden fields to track current photos and preserve existing signatures */}
+      {/* Hidden fields to track current photos and preserve existing signature for recibe */}
       <input type="hidden" name="_fotos_actuales" value={JSON.stringify(photos)} />
-      <input type="hidden" name="firma_tecnico" value={firma_tecnico || ""} />
       <input type="hidden" name="firma_recibe" value={firma_recibe || ""} />
 
       {/* Datos del servicio */}
@@ -374,20 +377,8 @@ export function EditarInformeForm({
       <div className="rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
         <h4 className="mb-3 text-sm font-semibold text-brand-secondary">Firmas</h4>
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Firma técnico — solo lectura */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-600">Firma del profesional que ejecuta</label>
-            {firma_tecnico ? (
-              <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2">
-                <Image src={firma_tecnico} alt="Firma del técnico" width={200} height={60} className="h-auto w-auto max-h-[60px] object-contain" />
-              </div>
-            ) : (
-              <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                <span className="text-sm text-zinc-400">Sin firmar</span>
-              </div>
-            )}
-          </div>
-          <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" defaultValue={firma_aprobador} />
+          <SignaturePad label="Firma del profesional que ejecuta" name="firma_tecnico" defaultValue={firma_tecnico} />
+          <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" defaultValue={firma_aprobador} firmaUrl={tecnicoFirmaUrl} firmaNombre={tecnicoNombre} />
           {/* Firma recibe — solo lectura */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-600">Firma de quien recibe a satisfacción</label>

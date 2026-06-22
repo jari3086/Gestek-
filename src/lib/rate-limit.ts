@@ -1,6 +1,36 @@
-const store = new Map<string, { count: number; reset: number }>();
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-export function rateLimit({
+let redis: Redis | undefined;
+let redisAvailable: boolean | undefined;
+const limiters = new Map<string, Ratelimit>();
+
+function isRedisAvailable(): boolean {
+  if (redisAvailable === undefined) {
+    redisAvailable = Boolean(process.env.UPSTASH_REDIS_REST_URL);
+  }
+  return redisAvailable;
+}
+
+function getLimiter(max: number, windowMs: number): Ratelimit | null {
+  if (!isRedisAvailable()) return null;
+  const configKey = `${max}:${windowMs}`;
+  if (!limiters.has(configKey)) {
+    if (!redis) redis = Redis.fromEnv();
+    limiters.set(
+      configKey,
+      new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(max, `${windowMs}ms`),
+        prefix: `ratelimit:${configKey}`,
+        analytics: true,
+      }),
+    );
+  }
+  return limiters.get(configKey)!;
+}
+
+export async function rateLimit({
   key,
   max = 30,
   windowMs = 60000,
@@ -9,19 +39,14 @@ export function rateLimit({
   max?: number;
   windowMs?: number;
 }) {
-  const now = Date.now();
-  const entry = store.get(key);
-
-  if (!entry || now > entry.reset) {
-    store.set(key, { count: 1, reset: now + windowMs });
-    return { allowed: true, remaining: max - 1, reset: now + windowMs };
+  const ratelimit = getLimiter(max, windowMs);
+  if (!ratelimit) {
+    return { allowed: true, remaining: max, reset: Date.now() + windowMs };
   }
-
-  entry.count++;
-
-  if (entry.count > max) {
-    return { allowed: false, remaining: 0, reset: entry.reset };
-  }
-
-  return { allowed: true, remaining: max - entry.count, reset: entry.reset };
+  const { success, limit, remaining, reset } = await ratelimit.limit(key);
+  return {
+    allowed: success,
+    remaining,
+    reset,
+  };
 }

@@ -58,7 +58,7 @@ export default async function FacturasPage(props: {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }]} userNombre={profile?.nombre} userRole={profile?.role} />
+      <AppHeader links={[{ href: "/dashboard", label: "Inicio" }]} userNombre={profile?.nombre} userRole={profile?.role} />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-2xl font-bold text-brand-secondary">Facturación</h2>

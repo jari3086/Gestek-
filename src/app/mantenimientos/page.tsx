@@ -26,7 +26,7 @@ export default async function MantenimientosPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }]} />
+      <AppHeader links={[{ href: "/dashboard", label: "Inicio" }]} />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h2 className="mb-6 text-2xl font-bold text-brand-secondary">Mantenimientos</h2>
         {(!mantenimientos || mantenimientos.length === 0) ? (

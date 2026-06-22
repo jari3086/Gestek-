@@ -63,7 +63,9 @@ export function AppHeader({
         {/* Desktop right side */}
         <div className="hidden items-center gap-4 md:flex">
           {userNombre && (
-            <span className="text-sm text-zinc-500 truncate max-w-[120px]">{userNombre}</span>
+            <Link href="/perfil" className="text-sm text-zinc-500 truncate max-w-[120px] hover:text-brand-primary transition-colors">
+              {userNombre}
+            </Link>
           )}
           {userRole && (
             <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary shrink-0">
@@ -95,7 +97,9 @@ export function AppHeader({
         <div className="border-t border-zinc-200/60 bg-white px-4 py-4 md:hidden">
           {userNombre && (
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-700">{userNombre}</span>
+              <Link href="/perfil" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-zinc-700 hover:text-brand-primary">
+                {userNombre}
+              </Link>
               {userRole && (
                 <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary">
                   {userRole === "administrador" ? "Admin" : userRole === "tecnico" ? "Técnico" : "Cliente"}

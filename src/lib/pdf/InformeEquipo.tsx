@@ -3,6 +3,7 @@ import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/render
 const styles = StyleSheet.create({
   page: {
     padding: 30,
+    paddingTop: 15,
     fontFamily: "Helvetica",
     fontSize: 10,
     color: "#1a1a2e",
@@ -18,8 +19,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
-    paddingBottom: 12,
+    marginBottom: 16,
+    paddingBottom: 10,
     borderBottomWidth: 2,
     borderBottomColor: "#3AB6B6",
   },
@@ -29,17 +30,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logo: {
-    width: 48,
-    height: 48,
+    width: 35,
+    height: 35,
+    objectFit: "contain",
+  },
+  logoCliente: {
+    width: 90,
+    height: 90,
     objectFit: "contain",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#486084",
   },
   headerSubtitle: {
-    fontSize: 7,
+    fontSize: 6.5,
     color: "#888",
   },
   headerRight: {
@@ -161,33 +167,27 @@ const styles = StyleSheet.create({
     marginTop: 40,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   firmaBox: {
     alignItems: "center",
     width: 150,
   },
+  firmaImageArea: {
+    width: 120,
+    height: 50,
+    marginBottom: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   firmaLine: {
-    width: 150,
+    width: 120,
     borderTopWidth: 1,
     borderTopColor: "#1a1a2e",
-    marginBottom: 4,
   },
   firmaText: {
     fontSize: 8,
     color: "#888",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 30,
-    left: 30,
-    right: 30,
-    borderTopWidth: 1,
-    borderTopColor: "#d1d5db",
-    paddingTop: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 7,
-    color: "#aaa",
   },
 });
 
@@ -239,7 +239,6 @@ interface InformeEquipoProps {
     checklist?: CheckItem[];
     fotos?: string[];
   };
-  fechaActual: string;
 }
 
 function resultadoLabel(r: string) {
@@ -265,7 +264,6 @@ export function InformeEquipo({
   cliente,
   sede,
   mantenimiento,
-  fechaActual,
 }: InformeEquipoProps) {
   const hasFotos = mantenimiento.fotos && mantenimiento.fotos.length > 0;
   const hasChecklist = mantenimiento.checklist && mantenimiento.checklist.length > 0;
@@ -284,11 +282,8 @@ export function InformeEquipo({
               </View>
             </View>
             <View style={styles.headerRight}>
-              <Text style={styles.headerRightText}>Informe de servicio</Text>
-              {logoClienteBase64 ? (
-                <Image style={{ width: 80, height: 40, objectFit: "contain" }} src={logoClienteBase64} />
-              ) : (
-                <Text style={styles.headerRightText}>Cliente: {cliente.nombre}</Text>
+              {logoClienteBase64 && (
+                <Image style={styles.logoCliente} src={logoClienteBase64} />
               )}
             </View>
           </View>
@@ -507,40 +502,41 @@ export function InformeEquipo({
           {/* Firmas */}
           <ContentBlock style={styles.firma}>
             <View style={styles.firmaBox}>
-              {mantenimiento.firma_tecnico ? (
-                <Image style={{ width: 120, height: 50, objectFit: "contain", marginBottom: 4 }} src={mantenimiento.firma_tecnico} />
-              ) : (
-                <View style={styles.firmaLine} />
-              )}
+              <View style={styles.firmaImageArea}>
+                {mantenimiento.firma_tecnico ? (
+                  <Image style={{ width: 120, height: 50, objectFit: "contain" }} src={mantenimiento.firma_tecnico} />
+                ) : (
+                  <View style={styles.firmaLine} />
+                )}
+              </View>
               <Text style={styles.firmaText}>Firma del profesional que ejecuta</Text>
               <Text style={[styles.firmaText, { marginTop: 2 }]}>{mantenimiento.tecnico_nombre}</Text>
             </View>
             <View style={styles.firmaBox}>
-              {mantenimiento.firma_aprobador ? (
-                <Image style={{ width: 120, height: 50, objectFit: "contain", marginBottom: 4 }} src={mantenimiento.firma_aprobador} />
-              ) : (
-                <View style={styles.firmaLine} />
-              )}
+              <View style={styles.firmaImageArea}>
+                {mantenimiento.firma_aprobador ? (
+                  <Image style={{ width: 120, height: 50, objectFit: "contain" }} src={mantenimiento.firma_aprobador} />
+                ) : (
+                  <View style={styles.firmaLine} />
+                )}
+              </View>
               <Text style={styles.firmaText}>Firma del profesional que aprueba</Text>
               <Text style={[styles.firmaText, { marginTop: 2 }]}>{mantenimiento.aprobador_nombre || ""}</Text>
             </View>
             <View style={styles.firmaBox}>
-              {mantenimiento.firma_recibe ? (
-                <Image style={{ width: 120, height: 50, objectFit: "contain", marginBottom: 4 }} src={mantenimiento.firma_recibe} />
-              ) : (
-                <View style={styles.firmaLine} />
-              )}
+              <View style={styles.firmaImageArea}>
+                {mantenimiento.firma_recibe ? (
+                  <Image style={{ width: 120, height: 50, objectFit: "contain" }} src={mantenimiento.firma_recibe} />
+                ) : (
+                  <View style={styles.firmaLine} />
+                )}
+              </View>
               <Text style={styles.firmaText}>Firma de quien recibe a satisfacción</Text>
               <Text style={[styles.firmaText, { marginTop: 2 }]}>{cliente.nombre}</Text>
             </View>
           </ContentBlock>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text>GESTEK — Sistema de Gestión de Equipos Biomédicos</Text>
-          <Text>Generado: {fechaActual} · {cliente.nombre}</Text>
-        </View>
       </Page>
     </Document>
   );

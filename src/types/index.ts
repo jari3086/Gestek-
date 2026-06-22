@@ -14,6 +14,7 @@ export interface Profile {
   tipo_persona?: string;
   departamento?: string;
   codigo_postal?: string;
+  firma_url?: string;
   created_at: string;
 }
 

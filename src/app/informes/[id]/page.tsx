@@ -14,7 +14,7 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
+    .from("profiles").select("role, nombre, firma_url").eq("id", user.id).single();
 
   const esAdmin = profile?.role === "administrador";
   const esTecnico = profile?.role === "tecnico";
@@ -63,7 +63,7 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
     <div className="min-h-screen bg-[#f5f7fa]">
       <AppHeader
         links={[
-          { href: "/dashboard", label: "Dashboard" },
+          { href: "/dashboard", label: "Inicio" },
           { href: "/informes", label: "Informes" },
         ]}
       />
@@ -151,6 +151,8 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
                 checklist={checklist}
                 fotos={fotos}
                 equipoNombre={equipo?.nombre || ""}
+                tecnicoFirmaUrl={profile?.firma_url}
+                tecnicoNombre={profile?.nombre}
               />
             </div>
           </>

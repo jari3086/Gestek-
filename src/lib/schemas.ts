@@ -11,7 +11,7 @@ export const equipoSchema = z.object({
   accesorios: z.string().max(500).optional().default(""),
   ubicacion: z.string().min(1, "Ubicación requerida").max(300),
   cliente_id: z.string().uuid("Cliente inválido").min(1),
-  sede_id: z.string().uuid("Sede inválida").optional().default(""),
+  sede_id: z.string().uuid().or(z.literal("")).default(""),
   fecha_ultimo_mantenimiento: z.string().optional().default(""),
   fecha_proximo_mantenimiento: z.string().optional().default(""),
   fecha_ultima_calibracion: z.string().optional().default(""),

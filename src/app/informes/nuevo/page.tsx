@@ -57,7 +57,7 @@ export default function NuevoInformePage() {
   const [success, setSuccess] = useState(false);
   const [preview, setPreview] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
-  const [profile, setProfile] = useState<{ role: string; nombre: string } | null>(null);
+  const [profile, setProfile] = useState<{ role: string; nombre: string; firma_url?: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -362,7 +362,7 @@ export default function NuevoInformePage() {
     <div className="min-h-screen bg-[#f5f7fa]">
       <AppHeader
         links={[
-          { href: "/dashboard", label: "Dashboard" },
+          { href: "/dashboard", label: "Inicio" },
           { href: "/informes", label: "Informes" },
         ]}
       />
@@ -706,8 +706,8 @@ export default function NuevoInformePage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <SignaturePad label="Firma del profesional que ejecuta" name="firma_tecnico" />
-                <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" />
+                <SignaturePad label="Firma del profesional que ejecuta" name="firma_tecnico" firmaUrl={profile?.firma_url} firmaNombre={profile?.nombre} />
+                <SignaturePad label="Firma de quien aprueba" name="firma_aprobador" firmaUrl={profile?.role === "administrador" ? profile?.firma_url : undefined} firmaNombre={profile?.role === "administrador" ? profile?.nombre : undefined} />
                 <SignaturePad label="Firma de quien recibe a satisfacción" name="firma_recibe" />
               </div>
             </div>

@@ -7,7 +7,7 @@ export async function GET() {
   if (!user) return NextResponse.json(null);
 
   const { data: profile } = await supabase
-    .from("profiles").select("id, role, nombre").eq("id", user.id).single();
+    .from("profiles").select("id, role, nombre, firma_url").eq("id", user.id).single();
 
   return NextResponse.json(profile);
 }

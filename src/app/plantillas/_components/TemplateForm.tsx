@@ -75,7 +75,7 @@ export default function TemplateForm({ plantilla }: Props) {
             <span className="text-lg font-bold text-brand-secondary">GESTEK</span>
           </div>
           <nav className="flex items-center gap-5">
-            <a href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Dashboard</a>
+            <a href="/dashboard" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Inicio</a>
             <a href="/plantillas" className="text-sm font-medium text-zinc-500 hover:text-brand-primary transition-colors">Plantillas</a>
           </nav>
         </div>

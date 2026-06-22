@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod/v4";
+import { isAdmin } from "@/lib/auth/check-admin";
 
 const sedeSchema = z.object({
   cliente_id: z.string().uuid("Cliente inválido").min(1),
@@ -17,16 +18,9 @@ const sedeSchema = z.object({
 
 export type SedeState = { error?: string } | undefined;
 
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  return profile?.role === "administrador";
-}
-
 export async function crearSede(prevState: SedeState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const parsed = sedeSchema.safeParse({
     cliente_id: formData.get("cliente_id") as string,
@@ -58,7 +52,7 @@ export async function crearSede(prevState: SedeState, formData: FormData) {
 
 export async function actualizarSede(prevState: SedeState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const id = formData.get("id") as string;
   if (!id) return { error: "ID requerido" };
@@ -95,7 +89,7 @@ export async function actualizarSede(prevState: SedeState, formData: FormData) {
 
 export async function eliminarSede(id: string, clienteId: string) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) throw new Error("No autorizado");
+  if (!(await isAdmin(supabase))) throw new Error("No autorizado");
 
   await supabase.from("sedes").delete().eq("id", id);
   revalidatePath(`/clientes/${clienteId}`);

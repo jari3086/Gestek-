@@ -11,7 +11,7 @@ export async function proxy(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
     || "127.0.0.1";
-  const result = rateLimit({ key: `proxy:${ip}`, max: 100, windowMs: 60000 });
+  const result = await rateLimit({ key: `proxy:${ip}`, max: 100, windowMs: 60000 });
   if (!result.allowed) {
     return new Response("Demasiadas solicitudes", { status: 429 });
   }

@@ -5,19 +5,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { facturaSchema } from "@/lib/schemas";
 import { hoyBogota } from "@/lib/date";
+import { isAdmin } from "@/lib/auth/check-admin";
 
 export type FacturaState = { error?: string } | undefined;
 
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  return profile?.role === "administrador";
-}
-
 export async function crearFactura(prevState: FacturaState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const parsed = facturaSchema.safeParse({
     cliente_id: formData.get("cliente_id") as string,
@@ -60,7 +54,7 @@ export async function crearFactura(prevState: FacturaState, formData: FormData) 
 
 export async function actualizarFactura(prevState: FacturaState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const id = formData.get("id") as string;
   if (!id) return { error: "ID requerido" };
@@ -105,7 +99,7 @@ export async function actualizarFactura(prevState: FacturaState, formData: FormD
 
 export async function cambiarEstadoFactura(formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) throw new Error("No autorizado");
+  if (!(await isAdmin(supabase))) throw new Error("No autorizado");
 
   const id = formData.get("id") as string;
   const estado = formData.get("estado") as string;
@@ -122,7 +116,7 @@ export async function cambiarEstadoFactura(formData: FormData) {
 
 export async function eliminarFactura(id: string) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) throw new Error("No autorizado");
+  if (!(await isAdmin(supabase))) throw new Error("No autorizado");
 
   const { error } = await supabase.from("facturas").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -136,9 +130,7 @@ export async function enviarFacturaEmail(facturaId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role, nombre").eq("id", user.id).single();
-  if (profile?.role !== "administrador") return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const { data: factura } = await supabase
     .from("facturas")

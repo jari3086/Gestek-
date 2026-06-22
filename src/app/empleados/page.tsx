@@ -28,7 +28,7 @@ export default async function EmpleadosPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }]} userNombre={profile?.nombre} userRole={profile?.role} />
+      <AppHeader links={[{ href: "/dashboard", label: "Inicio" }]} userNombre={profile?.nombre} userRole={profile?.role} />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
@@ -78,7 +78,13 @@ export default async function EmpleadosPage() {
                     <td className="px-5 py-4 text-zinc-500 text-sm">
                       {new Date(t.created_at).toLocaleDateString("es-ES")}
                     </td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-5 py-4 text-right flex items-center gap-2 justify-end">
+                      <Link
+                        href={`/empleados/${t.id}/editar`}
+                        className="text-xs text-brand-primary hover:underline"
+                      >
+                        Editar
+                      </Link>
                       <DeleteEmpleadoButton id={t.id} nombre={t.nombre} />
                     </td>
                   </tr>

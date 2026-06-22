@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || request.headers.get("x-real-ip")
       || "127.0.0.1";
-    const rl = rateLimit({ key: `upload:${ip}`, max: 10, windowMs: 60000 });
+    const rl = await rateLimit({ key: `upload:${ip}`, max: 10, windowMs: 60000 });
     if (!rl.allowed) {
       return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
     }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { plantillaSchema } from "@/lib/schemas";
+import { isAdmin } from "@/lib/auth/check-admin";
 
 export type PlantillaState = { error?: string } | undefined;
 
@@ -14,16 +15,9 @@ export interface PlantillaItem {
   obligatorio: boolean;
 }
 
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  return profile?.role === "administrador";
-}
-
 export async function crearPlantilla(prevState: PlantillaState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const parsed = plantillaSchema.safeParse({
     nombre: formData.get("nombre") as string,
@@ -53,7 +47,7 @@ export async function crearPlantilla(prevState: PlantillaState, formData: FormDa
 
 export async function actualizarPlantilla(prevState: PlantillaState, formData: FormData) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const id = formData.get("id") as string;
   if (!id) return { error: "ID requerido" };
@@ -85,7 +79,7 @@ export async function actualizarPlantilla(prevState: PlantillaState, formData: F
 
 export async function eliminarPlantilla(id: string) {
   const supabase = await createClient();
-  if (!(await checkAdmin(supabase))) throw new Error("No autorizado");
+  if (!(await isAdmin(supabase))) throw new Error("No autorizado");
 
   const { error } = await supabase.from("plantillas").delete().eq("id", id);
   if (error) throw new Error(error.message);

@@ -3,15 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { hoyBogota, dentroDeDias } from "@/lib/date";
+import { isAdmin } from "@/lib/auth/check-admin";
 
 export async function toggleVisibilidad(mantenimientoId: string, visible: boolean) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "administrador") return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const { error } = await supabase
     .from("mantenimientos")
@@ -205,9 +204,7 @@ export async function enviarEmailManual(mantenimientoId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role, nombre").eq("id", user.id).single();
-  if (profile?.role !== "administrador") return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   // Obtener mantenimiento con equipo y cliente
   const { data: mant } = await supabase
@@ -271,9 +268,7 @@ export async function enviarRecordatoriosMantenimiento() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "administrador") return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   if (!process.env.RESEND_API_KEY) {
     return { error: "RESEND_API_KEY no configurada" };
@@ -329,9 +324,7 @@ export async function eliminarInforme(mantenimientoId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "administrador") return { error: "No autorizado" };
+  if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const { error } = await supabase
     .from("mantenimientos")

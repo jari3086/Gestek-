@@ -21,7 +21,7 @@ export default async function PlantillasPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
-      <AppHeader links={[{ href: "/dashboard", label: "Dashboard" }, { href: "/informes", label: "Informes" }]} userNombre={profile?.nombre} userRole={profile?.role} />
+      <AppHeader links={[{ href: "/dashboard", label: "Inicio" }, { href: "/informes", label: "Informes" }]} userNombre={profile?.nombre} userRole={profile?.role} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">

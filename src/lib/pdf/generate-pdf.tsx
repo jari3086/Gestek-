@@ -28,10 +28,6 @@ export async function generatePdfBuffer(params: {
     } catch { /* ignore */ }
   }
 
-  const fechaActual = new Date().toLocaleDateString("es-ES", {
-    day: "numeric", month: "long", year: "numeric",
-  });
-
   const stream = await renderToStream(
     <InformeEquipo
       logoBase64={logoBase64}
@@ -40,7 +36,6 @@ export async function generatePdfBuffer(params: {
       cliente={params.cliente}
       sede={params.sede}
       mantenimiento={params.mantenimiento}
-      fechaActual={fechaActual}
     />,
   );
 
