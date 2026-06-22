@@ -243,7 +243,7 @@ export async function enviarEmailManual(mantenimientoId: string) {
              <p><strong>Equipo:</strong> ${equipo.nombre} (Serie: ${equipo.serie})</p>
              <p><strong>Tipo de servicio:</strong> ${mant.tipo}</p>
              <p><strong>Fecha:</strong> ${mant.fecha}</p>
-             <p><strong>Profesional:</strong> ${mant.tecnico_nombre || profile.nombre || "Técnico"}</p>
+             <p><strong>Profesional:</strong> ${mant.tecnico_nombre || "Técnico"}</p>
              <br/>
              <p>Saludos cordiales,</p>
              <p><strong>GESTEK</strong></p>`,
