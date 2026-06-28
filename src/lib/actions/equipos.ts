@@ -20,7 +20,7 @@ function fromForm(formData: FormData) {
     accesorios: formData.get("accesorios") as string,
     ubicacion: formData.get("ubicacion") as string,
     cliente_id: formData.get("cliente_id") as string,
-    sede_id: formData.get("sede_id") as string,
+    sede_id: (formData.get("sede_id") as string) || "",
     fecha_ultimo_mantenimiento: formData.get("fecha_ultimo_mantenimiento") as string,
     fecha_proximo_mantenimiento: formData.get("fecha_proximo_mantenimiento") as string,
     fecha_ultima_calibracion: formData.get("fecha_ultima_calibracion") as string,

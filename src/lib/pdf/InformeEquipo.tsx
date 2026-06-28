@@ -30,13 +30,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logo: {
-    width: 35,
-    height: 35,
+    width: 55,
+    height: 55,
     objectFit: "contain",
   },
   logoCliente: {
-    width: 90,
-    height: 90,
+    width: 55,
+    height: 55,
     objectFit: "contain",
   },
   headerTitle: {

@@ -440,7 +440,7 @@ export default function NuevoInformePage() {
                   <option disabled>No hay equipos para este cliente</option>
                 ) : equipos.map((eq: any) => (
                   <option key={eq.id} value={eq.id}>
-                    {eq.nombre} ({eq.marca || "—"} · {eq.serie || "—"})
+                    {eq.nombre} ({eq.marca || "—"} · {eq.serie || eq.id || eq.ubicacion})
                   </option>
                 ))}
               </select>
