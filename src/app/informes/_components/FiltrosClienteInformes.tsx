@@ -7,10 +7,12 @@ export function FiltrosClienteInformes({
   defaultValue,
   equipos,
   sedes,
+  ubicaciones,
 }: {
   defaultValue: string;
   equipos: { id: string; nombre: string; marca: string | null }[];
   sedes: { id: string; nombre: string }[];
+  ubicaciones: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,6 +31,7 @@ export function FiltrosClienteInformes({
 
   const sedeId = searchParams.get("sede_id") || "";
   const equipoId = searchParams.get("equipo_id") || "";
+  const ubicacion = searchParams.get("ubicacion") || "";
   const fechaInicio = searchParams.get("fecha_inicio") || "";
   const fechaFin = searchParams.get("fecha_fin") || "";
 
@@ -57,6 +60,18 @@ export function FiltrosClienteInformes({
           </option>
         ))}
       </select>
+      {ubicaciones.length > 0 && (
+        <select
+          value={ubicacion}
+          onChange={(e) => navigate({ ubicacion: e.target.value })}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
+        >
+          <option value="">Todas las ubicaciones</option>
+          {ubicaciones.map((ub) => (
+            <option key={ub} value={ub}>{ub}</option>
+          ))}
+        </select>
+      )}
       <input
         type="date"
         value={fechaInicio}

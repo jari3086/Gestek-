@@ -40,9 +40,12 @@ export default function NuevoInformePage() {
   const [clientes, setClientes] = useState<any[]>([]);
   const [selectedCliente, setSelectedCliente] = useState<any>(null);
   const [equipos, setEquipos] = useState<any[]>([]);
+  const [equiposFiltrados, setEquiposFiltrados] = useState<any[]>([]);
   const [selectedEquipo, setSelectedEquipo] = useState<any>(null);
   const [sedes, setSedes] = useState<any[]>([]);
   const [selectedSede, setSelectedSede] = useState<any>(null);
+  const [ubicaciones, setUbicaciones] = useState<string[]>([]);
+  const [filtroUbicacion, setFiltroUbicacion] = useState("");
   const [loadingSedes, setLoadingSedes] = useState(false);
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [plantillaId, setPlantillaId] = useState("");
@@ -81,6 +84,9 @@ export default function NuevoInformePage() {
     setSelectedEquipo(null);
     setSedes([]);
     setEquipos([]);
+    setEquiposFiltrados([]);
+    setUbicaciones([]);
+    setFiltroUbicacion("");
 
     if (!id) return;
 
@@ -101,6 +107,9 @@ export default function NuevoInformePage() {
     setSelectedSede(sd || null);
     setSelectedEquipo(null);
     setEquipos([]);
+    setEquiposFiltrados([]);
+    setUbicaciones([]);
+    setFiltroUbicacion("");
 
     if (!id || !selectedCliente) return;
 
@@ -108,16 +117,32 @@ export default function NuevoInformePage() {
     try {
       const res = await fetch(`/api/equipos?cliente_id=${selectedCliente.id}&sede_id=${id}`);
       const data = await res.json();
-      setEquipos(Array.isArray(data) ? data : []);
+      const equiposData = Array.isArray(data) ? data : [];
+      setEquipos(equiposData);
+      setEquiposFiltrados(equiposData);
+      const uniqueUbicaciones = [...new Set(equiposData.map((eq: any) => eq.ubicacion).filter(Boolean))] as string[];
+      setUbicaciones(uniqueUbicaciones);
     } catch {
       setEquipos([]);
+      setEquiposFiltrados([]);
     }
     setLoadingEquipos(false);
   };
 
+  const handleUbicacionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const ubicacion = e.target.value;
+    setFiltroUbicacion(ubicacion);
+    setSelectedEquipo(null);
+    if (ubicacion) {
+      setEquiposFiltrados(equipos.filter((eq: any) => eq.ubicacion === ubicacion));
+    } else {
+      setEquiposFiltrados(equipos);
+    }
+  };
+
   const handleEquipoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
-    const eq = equipos.find((eq: any) => eq.id === id);
+    const eq = equiposFiltrados.find((eq: any) => eq.id === id);
     setSelectedEquipo(eq || null);
   };
 
@@ -423,10 +448,33 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 3: Datos del equipo */}
+          {/* Step 2.5: Ubicación dentro de la sede */}
+          {selectedSede && equipos.length > 0 && ubicaciones.length > 0 && (
+            <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
+              <h3 className="mb-4 font-semibold text-brand-secondary">3. Ubicación</h3>
+              <select
+                value={filtroUbicacion}
+                onChange={handleUbicacionChange}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              >
+                <option value="">Todas las ubicaciones</option>
+                {ubicaciones.map((ub) => (
+                  <option key={ub} value={ub}>{ub}</option>
+                ))}
+              </select>
+              {filtroUbicacion && (
+                <div className="mt-3 rounded-lg bg-[#f8fafc] p-4 text-sm">
+                  <p className="font-medium text-brand-secondary">{filtroUbicacion}</p>
+                  <p className="mt-1 text-zinc-500">{equiposFiltrados.length} equipo{equiposFiltrados.length !== 1 ? "s" : ""} en esta ubicación</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 4: Datos del equipo */}
           {selectedSede && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">3. Datos del equipo</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "4" : "3"}. Datos del equipo</h3>
               <select
                 name="equipo_id"
                 required
@@ -436,11 +484,11 @@ export default function NuevoInformePage() {
                 <option value="">Seleccionar equipo...</option>
                 {loadingEquipos ? (
                   <option disabled>Cargando equipos...</option>
-                ) : equipos.length === 0 ? (
+                ) : equiposFiltrados.length === 0 ? (
                   <option disabled>No hay equipos para este cliente</option>
-                ) : equipos.map((eq: any) => (
+                ) : equiposFiltrados.map((eq: any) => (
                   <option key={eq.id} value={eq.id}>
-                    {eq.nombre} ({eq.marca || "—"} · {eq.serie || eq.id_cliente || eq.ubicacion})
+                    {eq.nombre} ({eq.marca || "—"} · {eq.serie || eq.id_cliente || eq.ubicacion || eq.id?.slice(0, 8)})
                   </option>
                 ))}
               </select>
@@ -455,10 +503,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 4: Datos del servicio */}
+          {/* Step 5 ó 4: Datos del servicio */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">4. Datos del servicio</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "5" : "4"}. Datos del servicio</h3>
 
               <div className="mb-4">
                 <label className="mb-1.5 block text-sm font-medium text-zinc-600">Tipo de servicio *</label>
@@ -536,10 +584,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 5: Observaciones iniciales */}
+          {/* Step 6 ó 5: Observaciones iniciales */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">5. Observaciones iniciales</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "6" : "5"}. Observaciones iniciales</h3>
               <textarea
                 name="observaciones"
                 rows={4}
@@ -549,10 +597,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 6: Lista de chequeo */}
+          {/* Step 7 ó 6: Lista de chequeo */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">6. Lista de chequeo</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "7" : "6"}. Lista de chequeo</h3>
 
               <select
                 value={plantillaId}
@@ -629,10 +677,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 7: Conclusiones */}
+          {/* Step 8 ó 7: Conclusiones */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">7. Conclusiones</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "8" : "7"}. Conclusiones</h3>
               <textarea
                 name="conclusion"
                 rows={3}
@@ -642,10 +690,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 8: Anexo fotográfico */}
+          {/* Step 9 ó 8: Anexo fotográfico */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">8. Anexo fotográfico</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "9" : "8"}. Anexo fotográfico</h3>
 
               <div className="mb-4 flex flex-wrap gap-3">
                 {photos.map((url) => (
@@ -691,10 +739,10 @@ export default function NuevoInformePage() {
             </div>
           )}
 
-          {/* Step 9: Firmas */}
+          {/* Step 10 ó 9: Firmas */}
           {selectedEquipo && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">9. Firmas</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "10" : "9"}. Firmas</h3>
 
               <div className="mb-4">
                 <label className="mb-1.5 block text-sm font-medium text-zinc-600">Profesional que aprueba</label>
@@ -742,7 +790,7 @@ export default function NuevoInformePage() {
 
           {selectedEquipo && preview && previewData && (
             <div className="rounded-xl border border-zinc-200/60 bg-white p-6 shadow-card">
-              <h3 className="mb-4 font-semibold text-brand-secondary">10. Vista previa del informe</h3>
+              <h3 className="mb-4 font-semibold text-brand-secondary">{ubicaciones.length > 0 ? "11" : "10"}. Vista previa del informe</h3>
               <p className="mb-4 text-xs text-zinc-400">Revisa los datos antes de generar el informe. Puedes volver arriba para editar cualquier sección.</p>
 
               <div className="mb-4 grid gap-4 sm:grid-cols-2">

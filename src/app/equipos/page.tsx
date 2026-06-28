@@ -20,6 +20,7 @@ export default function EquiposPage() {
   const [filtroModelo, setFiltroModelo] = useState("");
   const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
   const [filtroFechaFin, setFiltroFechaFin] = useState("");
+  const [filtroUbicacion, setFiltroUbicacion] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -73,9 +74,10 @@ export default function EquiposPage() {
       if (filtroFechaFin && eq.ultimo_informe_fecha) {
         if (new Date(eq.ultimo_informe_fecha) > new Date(filtroFechaFin)) return false;
       }
+      if (filtroUbicacion && !(eq.ubicacion || "").toLowerCase().includes(filtroUbicacion.toLowerCase())) return false;
       return true;
     });
-  }, [equipos, filtroCliente, filtroSede, filtroEquipo, filtroModelo, filtroFechaInicio, filtroFechaFin]);
+  }, [equipos, filtroCliente, filtroSede, filtroEquipo, filtroModelo, filtroFechaInicio, filtroFechaFin, filtroUbicacion]);
 
   if (loading) return (
     <div className="min-h-screen bg-[#f5f7fa] flex items-center justify-center">
@@ -165,6 +167,12 @@ export default function EquiposPage() {
             className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
           />
           <input
+            placeholder="Filtrar ubicación..."
+            value={filtroUbicacion}
+            onChange={(e) => setFiltroUbicacion(e.target.value)}
+            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
+          />
+          <input
             type="date"
             value={filtroFechaInicio}
             onChange={(e) => setFiltroFechaInicio(e.target.value)}
@@ -193,6 +201,7 @@ export default function EquiposPage() {
                   <th className="px-5 py-3 font-medium">Marca</th>
                   <th className="px-5 py-3 font-medium">Modelo</th>
                   <th className="px-5 py-3 font-medium">Serie</th>
+                  <th className="px-5 py-3 font-medium">Ubicación</th>
                     {esAdmin && <th className="px-5 py-3 font-medium">Cliente</th>}
                     {filtroCliente && sedesFiltradas.length > 0 && <th className="px-5 py-3 font-medium">Sede</th>}
                     <th className="px-5 py-3 font-medium">Próximo mant.</th>
@@ -214,6 +223,7 @@ export default function EquiposPage() {
                     <td className="px-5 py-4 text-zinc-600">{eq.marca || "—"}</td>
                     <td className="px-5 py-4 text-zinc-600">{eq.modelo || "—"}</td>
                     <td className="px-5 py-4 font-mono text-sm text-zinc-500">{eq.serie}</td>
+                    <td className="px-5 py-4 text-zinc-600">{eq.ubicacion || "—"}</td>
                     {esAdmin && (
                       <td className="px-5 py-4 text-zinc-600">
                         <div>{(eq.cliente as any)?.nombre ?? "—"}</div>

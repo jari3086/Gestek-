@@ -12,10 +12,12 @@ export function FiltrosAdminInformes({
   tecnicos,
   clientes,
   equipos,
+  ubicaciones,
 }: {
   tecnicos: FilterOption[];
   clientes: FilterOption[];
   equipos: FilterOption[];
+  ubicaciones: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,6 +37,7 @@ export function FiltrosAdminInformes({
   const tecnicoId = searchParams.get("tecnico_id") || "";
   const clienteId = searchParams.get("cliente_id") || "";
   const equipoId = searchParams.get("equipo_id") || "";
+  const ubicacion = searchParams.get("ubicacion") || "";
 
   return (
     <div className="flex flex-wrap gap-3">
@@ -68,6 +71,18 @@ export function FiltrosAdminInformes({
           <option key={eq.id} value={eq.id}>{eq.nombre}</option>
         ))}
       </select>
+      {ubicaciones.length > 0 && (
+        <select
+          value={ubicacion}
+          onChange={(e) => navigate({ ubicacion: e.target.value })}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-soft focus:border-brand-primary focus:outline-none"
+        >
+          <option value="">Todas las ubicaciones</option>
+          {ubicaciones.map((ub) => (
+            <option key={ub} value={ub}>{ub}</option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }

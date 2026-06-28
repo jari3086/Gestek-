@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
 
   const clientIdFilter = request.nextUrl.searchParams.get("cliente_id");
   const sedeFilter = request.nextUrl.searchParams.get("sede_id");
+  const ubicacionFilter = request.nextUrl.searchParams.get("ubicacion");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest) {
 
   if (sedeFilter) {
     query = query.eq("sede_id", sedeFilter);
+  }
+
+  if (ubicacionFilter) {
+    query = query.ilike("ubicacion", `%${ubicacionFilter}%`);
   }
 
   const { data, error } = await query.order("nombre");

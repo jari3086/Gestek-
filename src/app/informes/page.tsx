@@ -21,7 +21,7 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
 
   let query = supabase
     .from("mantenimientos")
-    .select("*, equipo:equipo_id!inner(nombre, serie, marca, cliente_id, sede_id)")
+    .select("*, equipo:equipo_id!inner(nombre, serie, marca, cliente_id, sede_id, ubicacion)")
     .order("created_at", { ascending: false });
 
   if (searchParams?.equipo_id) {
@@ -32,6 +32,10 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
 
   if (searchParams?.sede_id) {
     query = query.eq("equipo.sede_id", searchParams.sede_id);
+  }
+
+  if (searchParams?.ubicacion) {
+    query = query.ilike("equipo.ubicacion", `%${searchParams.ubicacion}%`);
   }
 
   if (searchParams?.fecha_inicio) {
@@ -56,13 +60,15 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
   // Para clientes, obtener sus equipos y sedes para los filtros
   let equiposCliente: any[] = [];
   let sedesCliente: any[] = [];
+  let ubicacionesCliente: string[] = [];
   if (esCliente) {
     const { data: eqs } = await supabase
       .from("equipos")
-      .select("id, nombre, marca, modelo")
+      .select("id, nombre, marca, modelo, ubicacion")
       .eq("cliente_id", user.id)
       .order("nombre");
     equiposCliente = eqs || [];
+    ubicacionesCliente = [...new Set((eqs || []).map((e: any) => e.ubicacion).filter(Boolean))] as string[];
 
     const { data: sds } = await supabase
       .from("sedes")
@@ -76,6 +82,7 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
   let tecnicos: { id: string; nombre: string }[] = [];
   let clientes: { id: string; nombre: string }[] = [];
   let equipos: { id: string; nombre: string }[] = [];
+  let ubicacionesAdmin: string[] = [];
   if (esAdmin) {
     const { data: tec } = await supabase
       .from("profiles")
@@ -91,12 +98,13 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
       .order("nombre");
     clientes = cl || [];
 
-    let equiposQuery = supabase.from("equipos").select("id, nombre").order("nombre");
+    let equiposQuery = supabase.from("equipos").select("id, nombre, ubicacion").order("nombre");
     if (searchParams?.cliente_id) {
       equiposQuery = equiposQuery.eq("cliente_id", searchParams.cliente_id);
     }
     const { data: eq } = await equiposQuery;
-    equipos = eq || [];
+    equipos = (eq || []).map((e: any) => ({ id: e.id, nombre: e.nombre }));
+    ubicacionesAdmin = [...new Set((eq || []).map((e: any) => e.ubicacion).filter(Boolean))] as string[];
   }
 
   const equipoSeleccionado = searchParams?.equipo_id || "";
@@ -135,6 +143,7 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
               defaultValue={equipoSeleccionado}
               equipos={equiposCliente}
               sedes={sedesCliente}
+              ubicaciones={ubicacionesCliente}
             />
           )}
           {esAdmin && (
@@ -142,6 +151,7 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
               tecnicos={tecnicos}
               clientes={clientes}
               equipos={equipos}
+              ubicaciones={ubicacionesAdmin}
             />
           )}
         </div>
