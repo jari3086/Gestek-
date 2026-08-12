@@ -212,22 +212,53 @@ describe("clienteSchema", () => {
 // plantillaSchema
 // ========================================
 describe("plantillaSchema", () => {
-  it("acepta nombre e items válidos", () => {
+  it("acepta nombre y secciones válidos", () => {
     const result = plantillaSchema.safeParse({
       nombre: "Checklist Ventilador",
-      items: '[{"item":"Filtros","tipo":"check"}]',
+      secciones:
+        '[{"id":"s1","titulo":"Visual","tipo":"checklist","items":[{"id":"a1","nombre":"Filtros","obligatorio":true}]}]',
     });
     expect(result.success).toBe(true);
   });
 
   it("rechaza nombre vacío", () => {
-    const result = plantillaSchema.safeParse({ nombre: "", items: "[]" });
+    const result = plantillaSchema.safeParse({ nombre: "" });
     expect(result.success).toBe(false);
   });
 
-  it("rechaza items vacío", () => {
-    const result = plantillaSchema.safeParse({ nombre: "Test", items: "" });
+  it("rechaza nombre > 200 caracteres", () => {
+    const result = plantillaSchema.safeParse({ nombre: "a".repeat(201) });
     expect(result.success).toBe(false);
+  });
+
+  it("usa default '[]' para secciones ausentes", () => {
+    const result = plantillaSchema.safeParse({ nombre: "Checklist Termómetro" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.secciones).toBe("[]");
+    }
+  });
+
+  it("acepta secciones de mediciones con grupos", () => {
+    const result = plantillaSchema.safeParse({
+      nombre: "Checklist Generador",
+      secciones:
+        '[{"id":"s2","titulo":"Eléctricas","tipo":"mediciones","grupos":[{"titulo":"Fuente","campos":[{"id":"m1","nombre":"Voltaje Línea A","unidad":"VAC"}]}]}]',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("mantiene campos legacy items/mediciones opcionales", () => {
+    const result = plantillaSchema.safeParse({
+      nombre: "Legacy",
+      items: '[{"id":"a1","nombre":"Aceite"}]',
+      mediciones: '[{"id":"m1","nombre":"Temperatura","unidad":"°C"}]',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.items).toBe('[{"id":"a1","nombre":"Aceite"}]');
+      expect(result.data.mediciones).toBe('[{"id":"m1","nombre":"Temperatura","unidad":"°C"}]');
+    }
   });
 });
 

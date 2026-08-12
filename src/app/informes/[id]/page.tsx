@@ -6,6 +6,7 @@ import { ToggleVisibilidad } from "../_components/ToggleVisibilidad";
 import { EnviarEmail } from "../_components/EnviarEmail";
 import { EditarInformeForm } from "../_components/EditarInformeForm";
 import { DeleteInformeButton } from "../_components/DeleteInformeButton";
+import { normalizeResultados } from "@/lib/checklist";
 
 export default async function InformeDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -52,7 +53,7 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
       .eq("mantenimiento_id", id),
   ]);
 
-  const checklist = (checklistResult?.data?.resultados as any[]) || [];
+  const { secciones } = normalizeResultados((checklistResult?.data?.resultados as unknown) || null);
   const fotos = fotosResult?.data?.map((f) => f.url) || [];
 
   type EquipoData = Record<string, string | null | undefined> & { cliente?: Record<string, string | null | undefined> };
@@ -148,9 +149,8 @@ export default async function InformeDetailPage(props: { params: Promise<{ id: s
                 firma_recibe={mant.firma_recibe || undefined}
                 proximo_mantenimiento={equipo?.fecha_proximo_mantenimiento || ""}
                 proxima_calibracion={equipo?.fecha_proxima_calibracion || ""}
-                checklist={checklist}
+                secciones={secciones}
                 fotos={fotos}
-                equipoNombre={equipo?.nombre || ""}
                 tecnicoFirmaUrl={profile?.firma_url}
                 tecnicoNombre={profile?.nombre}
               />

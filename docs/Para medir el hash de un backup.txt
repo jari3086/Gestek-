@@ -1,0 +1,9 @@
+Para medir el hash de un backup
+
+certutil -hashfile backup-gestek-2026-07-08.sql SHA256
+
+Si el hash coincide → el archivo está íntegro y no ha sido modificado. Si cambia → el archivo está corrupto o fue alterado.
+Resumen de verificación:
+- Estructura: ✅ INSERT INTO generados correctamente
+- Tamaño: 4.3 MB (coherente)
+- Hash: bb732d803c93ae64f73ec0f5af995ecf6f4fff79809e32754ae65212bba82adc ✅

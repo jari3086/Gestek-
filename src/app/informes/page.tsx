@@ -4,7 +4,8 @@ import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { FiltrosAdminInformes } from "./_components/FiltrosAdminInformes";
 import { FiltrosClienteInformes } from "./_components/FiltrosClienteInformes";
-import { ExportCsvButton } from "@/components/ExportCsvButton";
+import { ExportarBotones } from "@/components/ExportarBotones";
+import { buildFilasHistorial, type EquipoHistorial, type MantenimientoHistorial } from "@/lib/export-informes";
 
 export default async function InformesListPage(props: { searchParams?: Promise<Record<string, string>> }) {
   const searchParams = await props.searchParams;
@@ -55,7 +56,7 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
     query = query.eq("tecnico_id", user.id);
   }
 
-  const { data: mantenimientos } = await query.limit(100);
+  const { data: mantenimientos } = await query;
 
   // Para clientes, obtener sus equipos y sedes para los filtros
   let equiposCliente: any[] = [];
@@ -109,6 +110,31 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
 
   const equipoSeleccionado = searchParams?.equipo_id || "";
 
+  // Datos para el histórico exportado (equipos + sus informes), respetando filtros activos
+  let filasExportacion: Record<string, string | number | null | undefined>[] = [];
+  if (esAdmin || esCliente) {
+    let equiposExportQuery = supabase
+      .from("equipos")
+      .select("id, nombre, modelo, marca, serie, ubicacion, id_cliente, sede:sede_id(nombre), cliente:cliente_id(nombre)")
+      .order("nombre");
+
+    if (esCliente) {
+      equiposExportQuery = equiposExportQuery.eq("cliente_id", user.id);
+    } else if (searchParams?.cliente_id) {
+      equiposExportQuery = equiposExportQuery.eq("cliente_id", searchParams.cliente_id);
+    }
+    if (searchParams?.sede_id) equiposExportQuery = equiposExportQuery.eq("sede_id", searchParams.sede_id);
+    if (searchParams?.ubicacion) equiposExportQuery = equiposExportQuery.ilike("ubicacion", `%${searchParams.ubicacion}%`);
+    if (searchParams?.equipo_id) equiposExportQuery = equiposExportQuery.eq("id", searchParams.equipo_id);
+
+    const { data: eqs } = await equiposExportQuery;
+    filasExportacion = buildFilasHistorial(
+      (eqs as EquipoHistorial[]) || [],
+      (mantenimientos as MantenimientoHistorial[]) || [],
+      esCliente,
+    );
+  }
+
   const navLinks = [
     { href: "/dashboard", label: "Inicio" },
     ...(esAdmin || esTecnico ? [{ href: "/informes/nuevo", label: "+ Nuevo informe", highlight: true as const }] : []),
@@ -125,18 +151,8 @@ export default async function InformesListPage(props: { searchParams?: Promise<R
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-2xl font-bold text-brand-secondary">Informes generados</h2>
-          {mantenimientos && mantenimientos.length > 0 && (
-            <ExportCsvButton
-              rows={mantenimientos.map((m) => ({
-                Equipo: (m as any).equipo?.nombre || "",
-                Tipo: m.tipo,
-                Fecha: m.fecha,
-                Estado: m.estado,
-                "Técnico": (m as any).tecnico_nombre || "",
-                Serie: (m as any).equipo?.serie || "",
-              }))}
-              filename="informes"
-            />
+          {(esAdmin || esCliente) && filasExportacion.length > 0 && (
+            <ExportarBotones rows={filasExportacion} filename="informes" />
           )}
           {esCliente && equiposCliente.length > 0 && (
             <FiltrosClienteInformes

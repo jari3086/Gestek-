@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import TemplateForm from "../_components/TemplateForm";
+import { normalizeSecciones } from "@/lib/checklist";
 
 export default async function EditarPlantillaPage({
   params,
@@ -31,7 +32,7 @@ export default async function EditarPlantillaPage({
         id: plantilla.id,
         nombre: plantilla.nombre,
         descripcion: plantilla.descripcion || "",
-        items: plantilla.items as any[],
+        secciones: normalizeSecciones(plantilla.secciones as unknown),
       }}
     />
   );

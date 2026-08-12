@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
+import { normalizeResultados } from "@/lib/checklist";
 
 const styles = StyleSheet.create({
   page: {
@@ -189,14 +190,69 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#888",
   },
+  checklistGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 6,
+  },
+  checklistItem: {
+    width: "50%",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 6,
+    paddingRight: 10,
+  },
+  checklistBox: {
+    width: 11,
+    height: 11,
+    borderWidth: 1,
+    borderColor: "#6b7280",
+    borderRadius: 2,
+    marginRight: 6,
+    marginTop: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  checkIcon: {
+    width: 11,
+    height: 11,
+    position: "relative",
+  },
+  checkStrokeA: {
+    position: "absolute",
+    left: 2,
+    top: 6.5,
+    width: 3,
+    height: 1.5,
+    backgroundColor: "#3AB6B6",
+    transform: "rotate(45deg)",
+  },
+  checkStrokeB: {
+    position: "absolute",
+    left: 3.5,
+    top: 4.5,
+    width: 7,
+    height: 1.5,
+    backgroundColor: "#3AB6B6",
+    transform: "rotate(-45deg)",
+  },
+  checklistTextWrap: {
+    flex: 1,
+  },
+  checklistText: {
+    fontSize: 9,
+    lineHeight: 1.5,
+    color: "#1a1a2e",
+  },
+  checklistObs: {
+    fontSize: 7.5,
+    lineHeight: 1.4,
+    color: "#888",
+    fontStyle: "italic",
+    marginTop: 1,
+  },
 });
-
-interface CheckItem {
-  nombre: string;
-  categoria: string;
-  resultado: "ok" | "falla" | "na";
-  observacion?: string;
-}
 
 interface InformeEquipoProps {
   logoBase64?: string | null;
@@ -236,25 +292,22 @@ interface InformeEquipoProps {
     firma_tecnico?: string;
     firma_aprobador?: string;
     firma_recibe?: string;
-    checklist?: CheckItem[];
+    checklist?: unknown;
     fotos?: string[];
   };
 }
 
-function resultadoLabel(r: string) {
-  if (r === "ok") return "OK";
-  if (r === "falla") return "FALLA";
-  return "N/A";
-}
-
-function resultadoColor(r: string) {
-  if (r === "ok") return "#16a34a";
-  if (r === "falla") return "#dc2626";
-  return "#a1a1aa";
-}
-
 function ContentBlock({ children, style }: { children: React.ReactNode; style?: any }) {
   return <View wrap={false} style={style}>{children}</View>;
+}
+
+function CheckIcon() {
+  return (
+    <View style={styles.checkIcon}>
+      <View style={styles.checkStrokeA} />
+      <View style={styles.checkStrokeB} />
+    </View>
+  );
 }
 
 export function InformeEquipo({
@@ -266,7 +319,9 @@ export function InformeEquipo({
   mantenimiento,
 }: InformeEquipoProps) {
   const hasFotos = mantenimiento.fotos && mantenimiento.fotos.length > 0;
-  const hasChecklist = mantenimiento.checklist && mantenimiento.checklist.length > 0;
+  const resultados = normalizeResultados(mantenimiento.checklist as unknown);
+  const secciones = resultados.secciones;
+  const hasSecciones = secciones.length > 0;
 
   return (
     <Document>
@@ -445,30 +500,66 @@ export function InformeEquipo({
             </ContentBlock>
           )}
 
-          {/* Checklist */}
-          {hasChecklist && (
-            <ContentBlock style={styles.section}>
-              <Text style={styles.sectionTitle}>Lista de chequeo</Text>
-              <View style={styles.table}>
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.tableHeaderCell, { width: "40%" }]}>Ítem</Text>
-                  <Text style={[styles.tableHeaderCell, { width: "20%" }]}>Categoría</Text>
-                  <Text style={[styles.tableHeaderCell, { width: "12%", textAlign: "center" }]}>Resultado</Text>
-                  <Text style={[styles.tableHeaderCell, { width: "28%" }]}>Observación</Text>
-                </View>
-                {mantenimiento.checklist!.map((item, i) => (
-                  <View key={i} style={[styles.tableRow, i % 2 === 0 ? { backgroundColor: "#fafafa" } : undefined] as any}>
-                    <Text style={[styles.tableCell, { width: "40%" }]}>{item.nombre}</Text>
-                    <Text style={[styles.tableCell, { width: "20%" }]}>{item.categoria}</Text>
-                    <Text style={[styles.tableCellCenter, { width: "12%", color: resultadoColor(item.resultado) }]}>
-                      {resultadoLabel(item.resultado)}
+          {/* Secciones de verificación (checklist y mediciones) */}
+          {hasSecciones &&
+            secciones.map((sec, i) => {
+              if (sec.tipo === "checklist") {
+                return (
+                  <ContentBlock key={i} style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      {sec.titulo || "Lista de verificación"}
                     </Text>
-                    <Text style={[styles.tableCell, { width: "28%" }]}>{item.observacion || "—"}</Text>
-                  </View>
-                ))}
-              </View>
-            </ContentBlock>
-          )}
+                    <View style={styles.checklistGrid}>
+                      {sec.items.map((item, j) => (
+                        <View key={j} style={styles.checklistItem}>
+                          <View style={styles.checklistBox}>
+                            {item.cumple && <CheckIcon />}
+                          </View>
+                          <View style={styles.checklistTextWrap}>
+                            <Text style={styles.checklistText}>{item.nombre}</Text>
+                            {item.observacion && (
+                              <Text style={styles.checklistObs}>{item.observacion}</Text>
+                            )}
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </ContentBlock>
+                );
+              }
+
+              return (
+                <ContentBlock key={i} style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    {sec.titulo || "Mediciones"}
+                  </Text>
+                  {sec.grupos.map((grupo, gi) => (
+                    <View key={gi}>
+                      {grupo.titulo && (
+                        <Text style={styles.boxTitle}>{grupo.titulo}</Text>
+                      )}
+                      <View style={styles.table}>
+                        <View style={styles.tableHeader}>
+                          <Text style={[styles.tableHeaderCell, { width: "52%" }]}>Parámetro</Text>
+                          <Text style={[styles.tableHeaderCell, { width: "18%" }]}>Unidad</Text>
+                          <Text style={[styles.tableHeaderCell, { width: "30%" }]}>Valor medido</Text>
+                        </View>
+                        {grupo.campos.map((m, ci) => (
+                          <View
+                            key={ci}
+                            style={[styles.tableRow, ci % 2 === 0 ? { backgroundColor: "#fafafa" } : undefined] as any}
+                          >
+                            <Text style={[styles.tableCell, { width: "52%" }]}>{m.nombre}</Text>
+                            <Text style={[styles.tableCell, { width: "18%" }]}>{m.unidad}</Text>
+                            <Text style={[styles.tableCell, { width: "30%" }]}>{m.valor || "—"}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </ContentBlock>
+              );
+            })}
 
           {/* Conclusión */}
           {mantenimiento.conclusion && (

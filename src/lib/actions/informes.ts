@@ -2,8 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { hoyBogota, dentroDeDias } from "@/lib/date";
+import { hoyBogota, dentroDeDias, fechaOpcional } from "@/lib/date";
 import { isAdmin } from "@/lib/auth/check-admin";
+import { normalizeResultados } from "@/lib/checklist";
 
 export async function toggleVisibilidad(mantenimientoId: string, visible: boolean) {
   const supabase = await createClient();
@@ -39,7 +40,7 @@ export async function actualizarInforme(
     firma_recibe?: string;
     proximo_mantenimiento?: string;
     proxima_calibracion?: string;
-    checklist?: { nombre: string; categoria: string; resultado: string; observacion: string }[];
+    checklist?: unknown;
     fotos_nuevas?: string[];
     fotos_eliminar?: string[];
   },
@@ -54,7 +55,11 @@ export async function actualizarInforme(
 
   const updates: Record<string, any> = {};
   if (data.tipo !== undefined) updates.tipo = data.tipo;
-  if (data.fecha !== undefined) updates.fecha = data.fecha;
+  if (data.fecha !== undefined) {
+    // `fecha` es NOT NULL: si llega vacía se omite (conserva el valor previo)
+    const fecha = fechaOpcional(data.fecha);
+    if (fecha) updates.fecha = fecha;
+  }
   if (data.observaciones !== undefined) updates.observaciones = data.observaciones;
   if (data.conclusion !== undefined) updates.conclusion = data.conclusion;
   if (data.orden_servicio !== undefined) updates.orden_servicio = data.orden_servicio;
@@ -79,15 +84,16 @@ export async function actualizarInforme(
       .single();
 
     if (mant?.equipo_id) {
-      const eqUpdates: Record<string, string> = {};
-      if (data.proximo_mantenimiento !== undefined) eqUpdates.fecha_proximo_mantenimiento = data.proximo_mantenimiento;
-      if (data.proxima_calibracion !== undefined) eqUpdates.fecha_proxima_calibracion = data.proxima_calibracion;
+      const eqUpdates: Record<string, string | null> = {};
+      if (data.proximo_mantenimiento !== undefined) eqUpdates.fecha_proximo_mantenimiento = fechaOpcional(data.proximo_mantenimiento);
+      if (data.proxima_calibracion !== undefined) eqUpdates.fecha_proxima_calibracion = fechaOpcional(data.proxima_calibracion);
       await supabase.from("equipos").update(eqUpdates).eq("id", mant.equipo_id);
     }
   }
 
   // Update checklist
   if (data.checklist !== undefined) {
+    const resultados = normalizeResultados(data.checklist);
     const existing = await supabase
       .from("checklist_resultados")
       .select("id")
@@ -97,12 +103,12 @@ export async function actualizarInforme(
     if (existing.data) {
       await supabase
         .from("checklist_resultados")
-        .update({ resultados: data.checklist })
+        .update({ resultados })
         .eq("id", existing.data.id);
     } else {
       await supabase
         .from("checklist_resultados")
-        .insert({ mantenimiento_id: mantenimientoId, resultados: data.checklist });
+        .insert({ mantenimiento_id: mantenimientoId, resultados });
     }
   }
 

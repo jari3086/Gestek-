@@ -89,10 +89,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Tipo de archivo no permitido: " + mime }, { status: 400 });
     }
 
+    const folder = (formData.get("folder") as string) || "fotos";
+
     let buffer: Buffer = Buffer.from(await file.arrayBuffer());
     let contentType = mime;
 
-    if (!WEB_TYPES.includes(mime)) {
+    if (folder === "fotos") {
+      // Fotos de evidencia: normalizar siempre a JPEG optimizado
+      try {
+        buffer = await sharp(buffer)
+          .rotate()
+          .resize({ width: 1600, withoutEnlargement: true })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        contentType = "image/jpeg";
+      } catch {
+        return NextResponse.json({ error: "No se pudo convertir la imagen. Formatos soportados: JPEG, PNG, WebP, HEIC, HEIF, DNG, BMP, TIFF." }, { status: 400 });
+      }
+    } else if (!WEB_TYPES.includes(mime)) {
       try {
         buffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
         contentType = "image/jpeg";
@@ -105,8 +119,6 @@ export async function POST(request: Request) {
         }
       }
     }
-
-    const folder = (formData.get("folder") as string) || "fotos";
     const baseName = file.name.replace(/\s+/g, "-").replace(/\.[^.]+$/, "");
     const fileName = `${folder}/${user.id}/${Date.now()}-${baseName}.${extFromMime(contentType)}`;
 

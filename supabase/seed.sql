@@ -56,23 +56,49 @@ begin
   from public.profiles where email = 'admin@cmlosandes.com';
 
   -- 4. Plantillas de ejemplo
-  insert into public.plantillas (id, nombre, items)
+  insert into public.plantillas (id, nombre, secciones)
   values
     (gen_random_uuid(), 'Checklist Ventilador Mecánico',
      '[
-       {"item": "Filtros en buen estado", "tipo": "check"},
-       {"item": "Calibración de sensores", "tipo": "check"},
-       {"item": "Conexiones y mangueras sin fugas", "tipo": "check"},
-       {"item": "Batería de respaldo funcional", "tipo": "check"},
-       {"item": "Lectura de parámetros dentro de rango", "tipo": "check"}
+       {
+         "id": "sec-visual",
+         "titulo": "Verificación general",
+         "tipo": "checklist",
+         "items": [
+           {"id": "a1", "nombre": "Filtros en buen estado", "obligatorio": true},
+           {"id": "a2", "nombre": "Calibración de sensores", "obligatorio": true},
+           {"id": "a3", "nombre": "Conexiones y mangueras sin fugas", "obligatorio": true},
+           {"id": "a4", "nombre": "Batería de respaldo funcional", "obligatorio": false},
+           {"id": "a5", "nombre": "Lectura de parámetros dentro de rango", "obligatorio": true}
+         ]
+       }
      ]'::jsonb),
     (gen_random_uuid(), 'Checklist Monitor de Signos',
      '[
-       {"item": "Pantalla sin daños", "tipo": "check"},
-       {"item": "Cables y sensores en buen estado", "tipo": "check"},
-       {"item": "Alarmas funcionales", "tipo": "check"},
-       {"item": "Batería interna operativa", "tipo": "check"},
-       {"item": "Precisión de lectura vs patrón", "tipo": "numerico"}
+       {
+         "id": "sec-visual",
+         "titulo": "Verificación general",
+         "tipo": "checklist",
+         "items": [
+           {"id": "a1", "nombre": "Pantalla sin daños", "obligatorio": true},
+           {"id": "a2", "nombre": "Cables y sensores en buen estado", "obligatorio": true},
+           {"id": "a3", "nombre": "Alarmas funcionales", "obligatorio": true},
+           {"id": "a4", "nombre": "Batería interna operativa", "obligatorio": false}
+         ]
+       },
+       {
+         "id": "sec-mediciones",
+         "titulo": "Mediciones",
+         "tipo": "mediciones",
+         "grupos": [
+           {
+             "titulo": "Parámetros de señal",
+             "campos": [
+               {"id": "m1", "nombre": "Precisión de lectura vs patrón", "unidad": "%", "referencia": "±2%", "tipoCampo": "numero"}
+             ]
+           }
+         ]
+       }
      ]'::jsonb);
 
   -- 5. Configuración fiscal de ejemplo

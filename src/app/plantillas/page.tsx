@@ -47,7 +47,7 @@ export default async function PlantillasPage() {
                   <p className="mt-1 text-xs text-zinc-400">{p.descripcion}</p>
                 )}
                 <p className="mt-2 text-xs text-zinc-500">
-                  {(p.items as any[])?.length || 0} ítems
+                  {Array.isArray(p.secciones) ? p.secciones.length : 0} sección{Array.isArray(p.secciones) && p.secciones.length !== 1 ? "es" : ""}
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Link

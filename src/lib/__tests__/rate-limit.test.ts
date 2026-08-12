@@ -13,7 +13,7 @@ vi.mock("@upstash/ratelimit", () => {
   const Ratelimit = vi.fn(function () {
     return { limit: mockLimit };
   });
-  Ratelimit.slidingWindow = vi.fn();
+  Object.assign(Ratelimit, { slidingWindow: vi.fn() });
   return { Ratelimit };
 });
 

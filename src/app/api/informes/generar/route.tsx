@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { hoyBogota } from "@/lib/date";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
       mantenimientoId = mantRecord?.id ?? null;
 
       // Guardar checklist results
-      if (mantRecord && mantenimiento.checklist?.length > 0) {
+      if (mantRecord && mantenimiento.checklist) {
         await supabase.from("checklist_resultados").insert({
           mantenimiento_id: mantRecord.id,
           plantilla_id: body.plantillaId || null,

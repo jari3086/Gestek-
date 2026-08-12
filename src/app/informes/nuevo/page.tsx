@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { SignaturePad } from "@/components/SignaturePad";
+import {
+  normalizeSecciones,
+  type Seccion,
+  type SeccionResultado,
+} from "@/lib/checklist";
 
 type PlantillaItem = {
   id: string;
@@ -18,21 +23,21 @@ type Plantilla = {
   nombre: string;
   descripcion: string;
   items: PlantillaItem[];
-};
-
-type CheckResult = {
-  itemId: string;
-  resultado: "ok" | "falla" | "na";
-  observacion: string;
+  mediciones?: {
+    id: string;
+    nombre: string;
+    unidad: string;
+  }[];
+  secciones?: Seccion[];
 };
 
 const TIPOS_SERVICIO = [
   "Mantenimiento preventivo",
   "Mantenimiento correctivo",
   "Calibración",
-  "Verificación metrológica",
+  "Encendido",
   "Instalación",
-  "Reparación",
+  "Visita diagnóstica",
   "Otro",
 ];
 
@@ -50,7 +55,8 @@ export default function NuevoInformePage() {
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [plantillaId, setPlantillaId] = useState("");
   const [selectedPlantilla, setSelectedPlantilla] = useState<Plantilla | null>(null);
-  const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({});
+  const [seccionesPlantilla, setSeccionesPlantilla] = useState<Seccion[]>([]);
+  const [seccionResultados, setSeccionResultados] = useState<SeccionResultado[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingEquipos, setLoadingEquipos] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -151,30 +157,106 @@ export default function NuevoInformePage() {
     setPlantillaId(id);
     const plantilla = plantillas.find((p) => p.id === id) || null;
     setSelectedPlantilla(plantilla);
-    // Initialize check results
+
     if (plantilla) {
-      const initial: Record<string, CheckResult> = {};
-      plantilla.items.forEach((item) => {
-        initial[item.id] = { itemId: item.id, resultado: "ok", observacion: "" };
-      });
-      setCheckResults(initial);
+      const secciones = normalizeSecciones(plantilla.secciones ?? null);
+      if (secciones.length === 0) {
+        if (plantilla.items?.length) {
+          secciones.push({ id: "sec-check", titulo: "", tipo: "checklist", items: plantilla.items });
+        }
+        if (plantilla.mediciones?.length) {
+          secciones.push({
+            id: "sec-mediciones",
+            titulo: "",
+            tipo: "mediciones",
+            grupos: [{ titulo: "", campos: plantilla.mediciones }],
+          });
+        }
+      }
+      setSeccionesPlantilla(secciones);
+      setSeccionResultados(
+        secciones.map((sec) =>
+          sec.tipo === "checklist"
+            ? {
+                id: sec.id,
+                titulo: sec.titulo,
+                tipo: "checklist",
+                items: sec.items.map((i) => ({
+                  itemId: i.id,
+                  nombre: i.nombre,
+                  cumple: true,
+                  observacion: "",
+                })),
+              }
+            : {
+                id: sec.id,
+                titulo: sec.titulo,
+                tipo: "mediciones",
+                grupos: sec.grupos.map((g) => ({
+                  titulo: g.titulo,
+                  campos: g.campos.map((c) => ({
+                    medicionId: c.id,
+                    nombre: c.nombre,
+                    unidad: c.unidad,
+                    valor: "",
+                  })),
+                })),
+              },
+        ),
+      );
     } else {
-      setCheckResults({});
+      setSeccionesPlantilla([]);
+      setSeccionResultados([]);
     }
   };
 
-  const setResultado = (itemId: string, resultado: "ok" | "falla" | "na") => {
-    setCheckResults((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], resultado },
-    }));
+  const setCumple = (secIdx: number, itemIdx: number, cumple: boolean) => {
+    setSeccionResultados((prev) => {
+      const next = [...prev];
+      const sec = next[secIdx];
+      if (sec.tipo === "checklist") {
+        next[secIdx] = {
+          ...sec,
+          items: sec.items.map((it, i) => (i === itemIdx ? { ...it, cumple } : it)),
+        };
+      }
+      return next;
+    });
   };
 
-  const setObservacion = (itemId: string, observacion: string) => {
-    setCheckResults((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], observacion },
-    }));
+  const setObservacion = (secIdx: number, itemIdx: number, observacion: string) => {
+    setSeccionResultados((prev) => {
+      const next = [...prev];
+      const sec = next[secIdx];
+      if (sec.tipo === "checklist") {
+        next[secIdx] = {
+          ...sec,
+          items: sec.items.map((it, i) => (i === itemIdx ? { ...it, observacion } : it)),
+        };
+      }
+      return next;
+    });
+  };
+
+  const setValorMedicion = (secIdx: number, grupoIdx: number, campoIdx: number, valor: string) => {
+    setSeccionResultados((prev) => {
+      const next = [...prev];
+      const sec = next[secIdx];
+      if (sec.tipo === "mediciones") {
+        next[secIdx] = {
+          ...sec,
+          grupos: sec.grupos.map((g, gi) =>
+            gi === grupoIdx
+              ? {
+                  ...g,
+                  campos: g.campos.map((c, ci) => (ci === campoIdx ? { ...c, valor } : c)),
+                }
+              : g,
+          ),
+        };
+      }
+      return next;
+    });
   };
 
   const uploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,7 +269,7 @@ export default function NuevoInformePage() {
 
     const MAX_SIZE = 5 * 1024 * 1024;
     let uploaded = 0;
-    let errors: string[] = [];
+    const errors: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -306,15 +388,7 @@ export default function NuevoInformePage() {
           conclusion,
           tecnico_nombre: profesional || "Técnico",
           aprobador_nombre: aprobador || undefined,
-          checklist: Object.values(checkResults).map((cr) => {
-            const item = selectedPlantilla?.items.find((i) => i.id === cr.itemId);
-            return {
-              nombre: item?.nombre || "",
-              categoria: item?.categoria || "",
-              resultado: cr.resultado,
-              observacion: cr.observacion,
-            };
-          }),
+          checklist: { secciones: seccionResultados },
           fotos: photos,
           firma_tecnico: firmaTecnico || undefined,
           firma_aprobador: firmaAprobador || undefined,
@@ -626,52 +700,100 @@ export default function NuevoInformePage() {
                     {selectedPlantilla.nombre}{selectedPlantilla.descripcion ? ` — ${selectedPlantilla.descripcion}` : ""}
                   </p>
 
-                  <div className="space-y-3">
-                    {selectedPlantilla.items.map((item) => {
-                      const result = checkResults[item.id];
+                  {seccionesPlantilla.length === 0 && (
+                    <p className="rounded-lg bg-zinc-50 p-4 text-sm text-zinc-400">
+                      Esta plantilla no tiene secciones configuradas.
+                    </p>
+                  )}
+
+                  {seccionesPlantilla.map((sec, secIdx) => {
+                    const res = seccionResultados[secIdx];
+
+                    if (sec.tipo === "checklist") {
                       return (
-                        <div key={item.id} className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-brand-secondary">
-                                {item.nombre}
-                                {item.obligatorio && <span className="ml-1 text-red-400">*</span>}
-                              </p>
-                              <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
-                                {item.categoria}
-                              </span>
-                            </div>
-                            <div className="flex shrink-0 gap-2">
-                              {(["ok", "falla", "na"] as const).map((r) => (
-                                <button
-                                  key={r}
-                                  type="button"
-                                  onClick={() => setResultado(item.id, r)}
-                                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-                                    result?.resultado === r
-                                      ? r === "ok"
-                                        ? "border-green-300 bg-green-50 text-green-700"
-                                        : r === "falla"
-                                        ? "border-red-300 bg-red-50 text-red-700"
-                                        : "border-zinc-300 bg-zinc-100 text-zinc-500"
-                                      : "border-zinc-200 bg-white text-zinc-400 hover:bg-zinc-50"
-                                  }`}
-                                >
-                                  {r === "ok" ? "OK" : r === "falla" ? "FALLA" : "N/A"}
-                                </button>
-                              ))}
-                            </div>
+                        <div key={sec.id} className="mt-6 first:mt-0">
+                          <h4 className="mb-3 text-sm font-semibold text-brand-secondary">
+                            {sec.titulo || "Lista de verificación"}
+                          </h4>
+                          <div className="space-y-3">
+                            {sec.items.map((item, itemIdx) => {
+                              const result = res && res.tipo === "checklist" ? res.items[itemIdx] : undefined;
+                              return (
+                                <div key={item.id} className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <label className="flex flex-1 items-start gap-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={result?.cumple ?? false}
+                                        onChange={(e) => setCumple(secIdx, itemIdx, e.target.checked)}
+                                        className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-brand-primary focus:ring-brand-primary"
+                                      />
+                                      <span className="flex-1">
+                                        <span className="text-sm font-medium text-brand-secondary">
+                                          {item.nombre}
+                                          {item.obligatorio && <span className="ml-1 text-red-400">*</span>}
+                                        </span>
+                                        <span className="block text-xs text-zinc-400">
+                                          {result?.cumple ? "Cumple" : "No cumple"}
+                                        </span>
+                                      </span>
+                                    </label>
+                                  </div>
+                                  <input
+                                    placeholder="Observación (opcional)"
+                                    value={result?.observacion || ""}
+                                    onChange={(e) => setObservacion(secIdx, itemIdx, e.target.value)}
+                                    className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
-                          <input
-                            placeholder="Observación (opcional)"
-                            value={result?.observacion || ""}
-                            onChange={(e) => setObservacion(item.id, e.target.value)}
-                            className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                          />
                         </div>
                       );
-                    })}
-                  </div>
+                    }
+
+                    return (
+                      <div key={sec.id} className="mt-6 first:mt-0">
+                        <h4 className="mb-3 text-sm font-semibold text-brand-secondary">
+                          {sec.titulo || "Mediciones"}
+                        </h4>
+                        {sec.grupos.map((grupo, gi) => (
+                          <div key={gi} className="mb-4 last:mb-0">
+                            {grupo.titulo && (
+                              <p className="mb-2 text-xs font-semibold text-zinc-500">{grupo.titulo}</p>
+                            )}
+                            <div className="overflow-hidden rounded-lg border border-zinc-200">
+                              <div className="grid grid-cols-3 bg-zinc-100 text-xs font-semibold text-zinc-600">
+                                <div className="px-3 py-2">Parámetro</div>
+                                <div className="border-l border-zinc-200 px-3 py-2">Unidad</div>
+                                <div className="border-l border-zinc-200 px-3 py-2">Valor medido</div>
+                              </div>
+                              {grupo.campos.map((m, campoIdx) => {
+                                const mr = res && res.tipo === "mediciones" ? res.grupos[gi]?.campos[campoIdx] : undefined;
+                                return (
+                                  <div key={m.id} className="grid grid-cols-3 border-t border-zinc-200 bg-white text-sm">
+                                    <div className="px-3 py-2 text-zinc-700">{m.nombre}</div>
+                                    <div className="border-l border-zinc-200 px-3 py-2 text-zinc-500">{m.unidad || "—"}</div>
+                                    <div className="border-l border-zinc-200 px-2 py-1.5">
+                                      <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        placeholder="Valor"
+                                        value={mr?.valor || ""}
+                                        onChange={(e) => setValorMedicion(secIdx, gi, campoIdx, e.target.value)}
+                                        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -818,27 +940,68 @@ export default function NuevoInformePage() {
                 </div>
               </div>
 
-              {selectedPlantilla && Object.keys(checkResults).length > 0 && (
+              {selectedPlantilla && seccionResultados.length > 0 && (
                 <div className="mb-4 rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
                   <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400">Checklist: {selectedPlantilla.nombre}</h4>
-                  <div className="space-y-1">
-                    {selectedPlantilla.items.map((item) => {
-                      const r = checkResults[item.id];
+
+                  {seccionesPlantilla.map((sec, secIdx) => {
+                    const res = seccionResultados[secIdx];
+
+                    if (sec.tipo === "checklist") {
                       return (
-                        <div key={item.id} className="flex items-center gap-2 text-sm">
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${
-                            r?.resultado === "ok" ? "bg-green-500" : r?.resultado === "falla" ? "bg-red-500" : "bg-zinc-300"
-                          }`} />
-                          <span className="flex-1 text-zinc-700">{item.nombre}</span>
-                          <span className={`text-xs font-medium ${
-                            r?.resultado === "ok" ? "text-green-600" : r?.resultado === "falla" ? "text-red-600" : "text-zinc-400"
-                          }`}>
-                            {r?.resultado === "ok" ? "OK" : r?.resultado === "falla" ? "FALLA" : "N/A"}
-                          </span>
+                        <div key={sec.id} className="mb-3 last:mb-0">
+                          {sec.titulo && (
+                            <h5 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400">{sec.titulo}</h5>
+                          )}
+                          <div className="space-y-1">
+                            {sec.items.map((item, itemIdx) => {
+                              const r = res && res.tipo === "checklist" ? res.items[itemIdx] : undefined;
+                              return (
+                                <div key={item.id} className="flex items-center gap-2 text-sm">
+                                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+                                    r?.cumple ? "border-green-500 bg-green-500 text-white" : "border-zinc-300 bg-white text-transparent"
+                                  }`}>✓</span>
+                                  <span className="flex-1 text-zinc-700">{item.nombre}</span>
+                                  <span className={`text-xs font-medium ${
+                                    r?.cumple ? "text-green-600" : "text-red-600"
+                                  }`}>
+                                    {r?.cumple ? "Cumple" : "No cumple"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       );
-                    })}
-                  </div>
+                    }
+
+                    return (
+                      <div key={sec.id} className="mb-3 last:mb-0">
+                        <h5 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                          {sec.titulo || "Mediciones"}
+                        </h5>
+                        {sec.grupos.map((grupo, gi) => (
+                          <div key={gi} className="mb-2 last:mb-0">
+                            {grupo.titulo && (
+                              <p className="mb-1 text-xs font-semibold text-zinc-500">{grupo.titulo}</p>
+                            )}
+                            <div className="space-y-1 text-sm">
+                              {grupo.campos.map((m, campoIdx) => {
+                                const mr = res && res.tipo === "mediciones" ? res.grupos[gi]?.campos[campoIdx] : undefined;
+                                return (
+                                  <div key={m.id} className="flex items-center gap-2">
+                                    <span className="flex-1 text-zinc-700">{m.nombre}</span>
+                                    <span className="text-xs text-zinc-400">{m.unidad}</span>
+                                    <span className="w-24 text-right font-medium text-zinc-700">{mr?.valor || "—"}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { plantillaSchema } from "@/lib/schemas";
 import { isAdmin } from "@/lib/auth/check-admin";
+import { normalizeSecciones, normalizeChecklistItems, normalizeMediciones, type Seccion } from "@/lib/checklist";
 
 export type PlantillaState = { error?: string } | undefined;
 
@@ -15,33 +16,62 @@ export interface PlantillaItem {
   obligatorio: boolean;
 }
 
+function parseJson(value: string | null): unknown {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function seccionesFromForm(formData: FormData): { secciones: Seccion[]; error?: string } {
+  const raw = parseJson(formData.get("secciones") as string | null);
+
+  // Si no llega "secciones" (retrocompatibilidad), construir desde items/mediciones
+  if (!raw) {
+    const items = normalizeChecklistItems(parseJson(formData.get("items") as string | null));
+    const mediciones = normalizeMediciones(parseJson(formData.get("mediciones") as string | null));
+
+    const secciones: Seccion[] = [];
+    if (items.length > 0) secciones.push({ id: "sec-check", titulo: "", tipo: "checklist", items });
+    if (mediciones.length > 0) {
+      secciones.push({
+        id: "sec-mediciones",
+        titulo: "",
+        tipo: "mediciones",
+        grupos: [{ titulo: "", campos: mediciones }],
+      });
+    }
+    return { secciones };
+  }
+
+  return { secciones: normalizeSecciones(raw) };
+}
+
 export async function crearPlantilla(prevState: PlantillaState, formData: FormData) {
   const supabase = await createClient();
   if (!(await isAdmin(supabase))) return { error: "No autorizado" };
 
   const parsed = plantillaSchema.safeParse({
     nombre: formData.get("nombre") as string,
-    items: formData.get("items") as string,
   });
 
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Datos inválidos" };
 
-  let items: PlantillaItem[];
-  try {
-    items = JSON.parse(parsed.data.items);
-  } catch {
-    return { error: "Formato de items inválido" };
-  }
+  const { secciones, error } = seccionesFromForm(formData);
+  if (error) return { error };
+  if (secciones.length === 0) return { error: "Agregue al menos una sección" };
 
   const descripcion = formData.get("descripcion") as string || null;
 
-  const { error } = await supabase.from("plantillas").insert({
+  const { error: insertError } = await supabase.from("plantillas").insert({
     nombre: parsed.data.nombre,
     descripcion,
-    items,
+    secciones,
   });
 
-  if (error) return { error: error.message };
+  if (insertError) return { error: insertError.message };
   redirect("/plantillas");
 }
 
@@ -54,26 +84,22 @@ export async function actualizarPlantilla(prevState: PlantillaState, formData: F
 
   const parsed = plantillaSchema.safeParse({
     nombre: formData.get("nombre") as string,
-    items: formData.get("items") as string,
   });
 
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Datos inválidos" };
 
-  let items: PlantillaItem[];
-  try {
-    items = JSON.parse(parsed.data.items);
-  } catch {
-    return { error: "Formato de items inválido" };
-  }
+  const { secciones, error } = seccionesFromForm(formData);
+  if (error) return { error };
+  if (secciones.length === 0) return { error: "Agregue al menos una sección" };
 
   const descripcion = formData.get("descripcion") as string || null;
 
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from("plantillas")
-    .update({ nombre: parsed.data.nombre, descripcion, items, updated_at: new Date().toISOString() })
+    .update({ nombre: parsed.data.nombre, descripcion, secciones, updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (updateError) return { error: updateError.message };
   redirect("/plantillas");
 }
 

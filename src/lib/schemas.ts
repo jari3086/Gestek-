@@ -56,7 +56,9 @@ export const clienteSchema = z.object({
 
 export const plantillaSchema = z.object({
   nombre: z.string().min(1, "Nombre requerido").max(200),
-  items: z.string().min(1, "Items requeridos"),
+  secciones: z.string().optional().default("[]"),
+  items: z.string().optional().default("[]"),
+  mediciones: z.string().optional().default("[]"),
 });
 
 export const loginSchema = z.object({

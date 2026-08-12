@@ -5,7 +5,7 @@ import CambiarEstadoFactura from "./_components/CambiarEstadoFactura";
 import EliminarFacturaButton from "./_components/EliminarFacturaButton";
 import { EnviarFacturaEmailButton } from "./_components/EnviarFacturaEmailButton";
 import { FiltrosFacturas } from "./_components/FiltrosFacturas";
-import { ExportCsvButton } from "@/components/ExportCsvButton";
+import { ExportarBotones } from "@/components/ExportarBotones";
 import { AppHeader } from "@/components/AppHeader";
 
 export default async function FacturasPage(props: {
@@ -63,7 +63,7 @@ export default async function FacturasPage(props: {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-2xl font-bold text-brand-secondary">Facturación</h2>
           {facturas && facturas.length > 0 && (
-            <ExportCsvButton
+            <ExportarBotones
               rows={facturas.map((f) => ({
                 ID: f.id?.slice(0, 8).toUpperCase(),
                 Cliente: (f.cliente as any)?.nombre || "",

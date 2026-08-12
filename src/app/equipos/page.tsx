@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { downloadCsv } from "@/lib/csv";
 import { DeleteEquipoButton } from "./_components/DeleteEquipoButton";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -103,27 +102,6 @@ export default function EquiposPage() {
               >
                 + Nuevo equipo
               </Link>
-            )}
-            {filtrados.length > 0 && (
-              <button
-                type="button"
-                onClick={() => downloadCsv(
-                  filtrados.map((eq: any) => ({
-                    Nombre: eq.nombre,
-                    Tipo: eq.tipo,
-                    Marca: eq.marca,
-                    Modelo: eq.modelo,
-                    Serie: eq.serie,
-                    Ubicacion: eq.ubicacion,
-                    "Ultimo mant.": eq.fecha_ultimo_mantenimiento || "",
-                    "Proximo mant.": eq.fecha_proximo_mantenimiento || "",
-                  })),
-                  "equipos",
-                )}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 shadow-soft transition-colors hover:bg-zinc-50"
-              >
-                Exportar CSV
-              </button>
             )}
           </div>
         </div>

@@ -1,26 +1,20 @@
 "use client";
 
-import { useActionState, useRef, useState, useEffect } from "react";
+import { useActionState, useRef, useState } from "react";
 import { actualizarInforme } from "@/lib/actions/informes";
 import { SignaturePad } from "@/components/SignaturePad";
 import Image from "next/image";
+import type { SeccionResultado } from "@/lib/checklist";
 
 const TIPOS_SERVICIO = [
   "Mantenimiento preventivo",
   "Mantenimiento correctivo",
   "Calibración",
-  "Verificación metrológica",
+  "Encendido",
   "Instalación",
-  "Reparación",
+  "Visita diagnóstica",
   "Otro",
 ];
-
-type CheckItem = {
-  nombre: string;
-  categoria: string;
-  resultado: "ok" | "falla" | "na";
-  observacion: string;
-};
 
 export function EditarInformeForm({
   id,
@@ -37,9 +31,8 @@ export function EditarInformeForm({
   firma_recibe,
   proximo_mantenimiento,
   proxima_calibracion,
-  checklist: initialChecklist,
+  secciones: initialSecciones,
   fotos: initialFotos,
-  equipoNombre,
   tecnicoFirmaUrl,
   tecnicoNombre,
 }: {
@@ -57,14 +50,13 @@ export function EditarInformeForm({
   firma_recibe?: string;
   proximo_mantenimiento?: string;
   proxima_calibracion?: string;
-  checklist?: CheckItem[];
+  secciones?: SeccionResultado[];
   fotos?: string[];
-  equipoNombre?: string;
   tecnicoFirmaUrl?: string;
   tecnicoNombre?: string;
 }) {
   const [success, setSuccess] = useState(false);
-  const [checklist, setChecklist] = useState<CheckItem[]>(initialChecklist || []);
+  const [secciones, setSecciones] = useState<SeccionResultado[]>(initialSecciones || []);
   const [photos, setPhotos] = useState<string[]>(initialFotos || []);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
@@ -96,7 +88,7 @@ export function EditarInformeForm({
         firma_recibe: formData.get("firma_recibe") as string,
         proximo_mantenimiento: formData.get("proximo_mantenimiento") as string,
         proxima_calibracion: formData.get("proxima_calibracion") as string,
-        checklist: checklist.length > 0 ? checklist : undefined,
+        checklist: secciones.length > 0 ? { secciones } : undefined,
         fotos_nuevas: fotos_nuevas.length > 0 ? fotos_nuevas : undefined,
         fotos_eliminar: fotos_eliminar.length > 0 ? fotos_eliminar : undefined,
       });
@@ -120,7 +112,7 @@ export function EditarInformeForm({
 
     const MAX_SIZE = 5 * 1024 * 1024;
     let uploaded = 0;
-    let errors: string[] = [];
+    const errors: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -158,20 +150,135 @@ export function EditarInformeForm({
     setPhotos((prev) => prev.filter((p) => p !== url));
   };
 
-  const setResultado = (index: number, resultado: "ok" | "falla" | "na") => {
-    setChecklist((prev) => {
+  const setCumple = (secIdx: number, itemIdx: number, cumple: boolean) => {
+    setSecciones((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], resultado };
+      const sec = next[secIdx];
+      if (sec.tipo === "checklist") {
+        next[secIdx] = {
+          ...sec,
+          items: sec.items.map((it, i) =>
+            i === itemIdx ? { ...it, cumple } : it,
+          ),
+        };
+      }
       return next;
     });
   };
 
-  const setObservacion = (index: number, observacion: string) => {
-    setChecklist((prev) => {
+  const setObservacion = (secIdx: number, itemIdx: number, observacion: string) => {
+    setSecciones((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], observacion };
+      const sec = next[secIdx];
+      if (sec.tipo === "checklist") {
+        next[secIdx] = {
+          ...sec,
+          items: sec.items.map((it, i) =>
+            i === itemIdx ? { ...it, observacion } : it,
+          ),
+        };
+      }
       return next;
     });
+  };
+
+  const setValorMedicion = (secIdx: number, grupoIdx: number, campoIdx: number, valor: string) => {
+    setSecciones((prev) => {
+      const next = [...prev];
+      const sec = next[secIdx];
+      if (sec.tipo === "mediciones") {
+        next[secIdx] = {
+          ...sec,
+          grupos: sec.grupos.map((g, gi) =>
+            gi === grupoIdx
+              ? {
+                  ...g,
+                  campos: g.campos.map((c, ci) =>
+                    ci === campoIdx ? { ...c, valor } : c,
+                  ),
+                }
+              : g,
+          ),
+        };
+      }
+      return next;
+    });
+  };
+
+  const renderSeccion = (sec: SeccionResultado, secIdx: number) => {
+    if (sec.tipo === "checklist") {
+      return (
+        <div key={sec.id} className="rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
+          <h4 className="mb-3 text-sm font-semibold text-brand-secondary">
+            {sec.titulo || "Lista de verificación"}
+          </h4>
+          <div className="space-y-3">
+            {sec.items.map((item, index) => (
+              <div key={item.itemId} className="rounded-lg border border-zinc-200 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={item.cumple}
+                    onChange={(e) => setCumple(secIdx, index, e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-brand-primary focus:ring-brand-primary"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-brand-secondary">{item.nombre}</p>
+                    <span className={`text-xs ${item.cumple ? "text-green-600" : "text-red-600"}`}>
+                      {item.cumple ? "Cumple" : "No cumple"}
+                    </span>
+                  </div>
+                </div>
+                <input
+                  placeholder="Observación (opcional)"
+                  value={item.observacion || ""}
+                  onChange={(e) => setObservacion(secIdx, index, e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={sec.id} className="rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
+        <h4 className="mb-3 text-sm font-semibold text-brand-secondary">
+          {sec.titulo || "Mediciones"}
+        </h4>
+        {sec.grupos.map((grupo, gi) => (
+          <div key={gi} className="mb-4 last:mb-0">
+            {grupo.titulo && (
+              <p className="mb-2 text-xs font-semibold text-zinc-500">{grupo.titulo}</p>
+            )}
+            <div className="overflow-hidden rounded-lg border border-zinc-200">
+              <div className="grid grid-cols-3 bg-zinc-100 text-xs font-semibold text-zinc-600">
+                <div className="px-3 py-2">Parámetro</div>
+                <div className="border-l border-zinc-200 px-3 py-2">Unidad</div>
+                <div className="border-l border-zinc-200 px-3 py-2">Valor medido</div>
+              </div>
+              {grupo.campos.map((m, index) => (
+                <div key={m.medicionId} className="grid grid-cols-3 border-t border-zinc-200 bg-white text-sm">
+                  <div className="px-3 py-2 text-zinc-700">{m.nombre}</div>
+                  <div className="border-l border-zinc-200 px-3 py-2 text-zinc-500">{m.unidad || "—"}</div>
+                  <div className="border-l border-zinc-200 px-2 py-1.5">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Valor"
+                      value={m.valor || ""}
+                      onChange={(e) => setValorMedicion(secIdx, gi, index, e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -277,50 +384,10 @@ export function EditarInformeForm({
         />
       </div>
 
-      {/* Lista de chequeo */}
-      {checklist.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 bg-[#f8fafc] p-4">
-          <h4 className="mb-3 text-sm font-semibold text-brand-secondary">Lista de chequeo</h4>
-          <div className="space-y-3">
-            {checklist.map((item, index) => (
-              <div key={index} className="rounded-lg border border-zinc-200 bg-white p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-brand-secondary">{item.nombre}</p>
-                    <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
-                      {item.categoria}
-                    </span>
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    {(["ok", "falla", "na"] as const).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setResultado(index, r)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-                          item.resultado === r
-                            ? r === "ok"
-                              ? "border-green-300 bg-green-50 text-green-700"
-                              : r === "falla"
-                              ? "border-red-300 bg-red-50 text-red-700"
-                              : "border-zinc-300 bg-zinc-100 text-zinc-500"
-                            : "border-zinc-200 bg-white text-zinc-400 hover:bg-zinc-50"
-                        }`}
-                      >
-                        {r === "ok" ? "OK" : r === "falla" ? "FALLA" : "N/A"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <input
-                  placeholder="Observación (opcional)"
-                  value={item.observacion || ""}
-                  onChange={(e) => setObservacion(index, e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow-soft transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                />
-              </div>
-            ))}
-          </div>
+      {/* Secciones de verificación */}
+      {secciones.length > 0 && (
+        <div className="space-y-4">
+          {secciones.map((sec, i) => renderSeccion(sec, i))}
         </div>
       )}
 
